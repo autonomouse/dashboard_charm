@@ -1,0 +1,9 @@
+options:
+  ppa:
+    type: string
+    default: 
+    description: PPA to add before installing weebl.
+  ppa_key:
+    type: string
+    default:
+    description: Key for PPA.
