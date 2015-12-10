@@ -1,3 +1,4 @@
+#!/usr/bin/env python3.5
 import os
 import errno
 import yaml
@@ -63,7 +64,7 @@ def install_npm_deps():
 
 def install_weebl_deb():
     ppa = config['ppa']
-    ppa_key = conifg['ppa_key']
+    ppa_key = config['ppa_key']
     add_source(ppa, ppa_key)
     apt_update()
     apt_install(['python3-weebl'])
