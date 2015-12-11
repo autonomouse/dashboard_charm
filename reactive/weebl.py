@@ -6,6 +6,7 @@ import yaml
 from subprocess import check_call
 
 from charmhelpers.core import hookenv
+from charmhelpers.core.templating import render
 from charmhelpers.fetch import (
     add_source,
     apt_update,
@@ -62,6 +63,14 @@ def install_npm_deps():
     check_call(command)
 
 
+def setup_weebl_gunicorn_service():
+    render(
+        source="weebl-gunicorn.service",
+        target="/lib/systemd/system/weebl-gunicorn.service",
+        context={})
+    check_call(['systemctl', 'enable', 'weebl-gunicorn'])
+
+
 def install_weebl_deb():
     ppa = config['ppa']
     ppa_key = config['ppa_key']
@@ -78,9 +87,10 @@ def install_weebl(*args, **kwargs):
     install_pip_deps()
     hookenv.log('Installing npm packages!')
     install_npm_deps()
+    setup_weebl_gunicorn_service()
 
 
-def render_config(pgsql):
+def render_db_config(pgsql):
     db_settings = {
         'host':  pgsql.host(),
         'port': pgsql.port(),
@@ -97,5 +107,5 @@ def render_config(pgsql):
 def setup_database(pgsql):
     hookenv.log('Configuring weebl db!')
     hookenv.status_set('maintenance', 'weebl is connecting to pgsql!')
-    render_config(pgsql)
+    render_db_config(pgsql)
     hookenv.status_set('active', 'Ready')

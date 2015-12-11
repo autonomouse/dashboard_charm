@@ -1,0 +1,16 @@
+[Unit]
+Description=weebl gunicorn daemon
+After=network.target
+
+[Service]
+PIDFile=/run/weebl-gunicorn/pid
+User=www-data
+Group=www-data
+WorkingDirectory=/
+ExecStart=/usr/bin/python3.4 /usr/bin/gunicorn3 weebl.wsgi -b 127.0.0.1:8100
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
