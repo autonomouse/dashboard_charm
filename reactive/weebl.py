@@ -78,6 +78,11 @@ def collect_static():
     check_call(['django-admin', 'collectstatic', '--noinput'])
 
 
+def migrate_db():
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
+    check_call(['django-admin', 'migrate', '--noinput'])
+
+
 def install_npm_deps():
     mkdir_p(JSLIBS_DIR)
     npm_packages = ["d3", "nvd3", "angular-nvd3"]
@@ -85,7 +90,6 @@ def install_npm_deps():
     check_call(command)
 
 
-@when('nginx.available')
 def install_weebl(*args, **kwargs):
     hookenv.log('Installing weebl!')
     install_weebl_deb()
@@ -96,6 +100,7 @@ def install_weebl(*args, **kwargs):
     hookenv.log('Installing npm packages!')
     install_npm_deps()
     setup_weebl_gunicorn_service()
+    migrate_db()
     check_call(['service', 'weebl-gunicorn', 'start'])
     check_call(['service', 'nginx', 'restart'])
 
@@ -117,9 +122,10 @@ def render_config(pgsql):
         weebl_db.write(yaml.dump(config))
 
 
-@when('database.database.available')
+@when('database.database.available', 'nginx.available')
 def setup_database(pgsql):
     hookenv.log('Configuring weebl db!')
     hookenv.status_set('maintenance', 'weebl is connecting to pgsql!')
     render_config(pgsql)
+    install_weebl()
     hookenv.status_set('active', 'Ready')
