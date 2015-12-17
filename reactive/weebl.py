@@ -42,16 +42,8 @@ def request_db(pgsql):
     pgsql.request_roles('weebl')
 
 
-@hook('config-changed')
-def check_admin_pass():
-    admin_pass = hookenv.config('admin-pass')
-    if admin_pass:
-        set_state('admin-pass')
-    else:
-        remove_state('admin-pass')
-
-
 def install_pip_deps():
+    # TODO: remove pip usage once weebl drops swagger.
     pip_packages = ["django-tastypie-swagger", "django-extensions"]
     command = ["python3.4", "-m", "pip", "install"] + pip_packages
     check_call(command)
