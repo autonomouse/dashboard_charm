@@ -31,7 +31,7 @@ config = hookenv.config()
 def mkdir_p(directory_name):
     try:
         os.makedirs(directory_name)
-    except OSError as exc: 
+    except OSError as exc:
         if exc.errno != errno.EEXIST or not os.path.isdir(directory_name):
             raise exc
 
@@ -70,6 +70,11 @@ def collect_static():
     check_call(['django-admin', 'collectstatic', '--noinput'])
 
 
+def load_fixtures():
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
+    check_call(['django-admin', 'loaddata', 'initial_settings.yaml'])
+
+
 def migrate_db():
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
     check_call(['django-admin', 'migrate', '--noinput'])
@@ -95,6 +100,8 @@ def install_weebl(*args, **kwargs):
     migrate_db()
     check_call(['service', 'weebl-gunicorn', 'start'])
     check_call(['service', 'nginx', 'restart'])
+    hookenv.log('Loading fixtures...')
+    load_fixtures()
 
 
 def render_config(pgsql):
