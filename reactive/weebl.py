@@ -57,6 +57,11 @@ def setup_weebl_gunicorn_service():
     check_call(['systemctl', 'enable', 'weebl-gunicorn'])
 
 
+@hook('config-changed')
+def restart_weebl_gunicorn_service():
+    check_call(['service', 'weebl-gunicorn', 'restart'])
+
+
 def install_weebl_deb():
     ppa = config['ppa']
     ppa_key = config['ppa_key']
