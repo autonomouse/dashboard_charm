@@ -58,6 +58,11 @@ def setup_weebl_gunicorn_service():
 
 
 @hook('config-changed')
+def update_weebl():
+    install_weebl_deb()
+    restart_weebl_gunicorn_service()
+
+
 def restart_weebl_gunicorn_service():
     check_call(['service', 'weebl-gunicorn', 'restart'])
 
@@ -73,6 +78,11 @@ def install_weebl_deb():
 def collect_static():
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
     check_call(['django-admin', 'collectstatic', '--noinput'])
+
+
+def setup_weebl_site(weebl_url, weebl_name):
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
+    check_call(['django-admin', 'set_up_site', weebl_url, weebl_name])
 
 
 def load_fixtures():
@@ -107,6 +117,9 @@ def install_weebl(*args, **kwargs):
     check_call(['service', 'nginx', 'restart'])
     hookenv.log('Loading fixtures...')
     load_fixtures()
+    weebl_url = config['weebl_url']
+    weebl_name = config['weebl_name']
+    setup_weebl_site(weebl_url, weebl_name)
 
 
 def render_config(pgsql):
