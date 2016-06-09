@@ -1,10 +1,9 @@
 name: weebl
 summary: Weebl is the OIL Dashboard.
 maintainer: Jason Hobbs <jason.hobbs@canonical.com>
-description: |
-    OIL Dashboard provides insight into OIL.
-    This charm deploys the OIL dashboard.
+description: "OIL Dashboard provides insight into OIL. This charm deploys the OIL dashboard."
 series: [wily]
+tags: []
 requires:
     database:
         interface: pgsql
