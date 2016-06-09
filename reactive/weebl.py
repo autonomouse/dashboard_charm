@@ -64,7 +64,7 @@ def update_weebl():
 
 
 def restart_weebl_gunicorn_service():
-    check_call(['service', 'weebl-gunicorn', 'restart'])
+    check_call(['systemctl', 'restart', 'weebl-gunicorn'])
 
 
 def install_weebl_deb():
@@ -113,8 +113,8 @@ def install_weebl(*args, **kwargs):
     install_npm_deps()
     setup_weebl_gunicorn_service()
     migrate_db()
-    check_call(['service', 'weebl-gunicorn', 'start'])
-    check_call(['service', 'nginx', 'restart'])
+    check_call(['systemctl', 'start', 'weebl-gunicorn'])
+    check_call(['systemctl', 'start', 'nginx'])
     hookenv.log('Loading fixtures...')
     load_fixtures()
     weebl_url = config['weebl_url']
