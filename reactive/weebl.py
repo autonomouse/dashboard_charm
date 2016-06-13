@@ -44,6 +44,7 @@ def request_db(pgsql):
 
 def install_pip_deps():
     # TODO: remove pip usage once weebl drops swagger.
+    hookenv.log('Installing pip packages!')
     pip_packages = ["django-tastypie-swagger", "django-extensions"]
     command = ["python3.4", "-m", "pip", "install"] + pip_packages
     check_call(command)
@@ -58,9 +59,9 @@ def setup_weebl_gunicorn_service():
 
 
 @hook('config-changed')
-@hook('upgrade-charm')
 def update_weebl():
     install_weebl_deb()
+    #migrate_db()
     restart_weebl_gunicorn_service()
 
 
@@ -69,6 +70,7 @@ def restart_weebl_gunicorn_service():
 
 
 def install_weebl_deb():
+    hookenv.log('Installing/upgrading weebl!')
     ppa = config['ppa']
     ppa_key = config['ppa_key']
     add_source(ppa, ppa_key)
@@ -77,26 +79,31 @@ def install_weebl_deb():
 
 
 def collect_static():
+    hookenv.log('Collecting static files...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
     check_call(['django-admin', 'collectstatic', '--noinput'])
 
 
 def setup_weebl_site(weebl_url, weebl_name):
+    hookenv.log('Setting up weebl site...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
     check_call(['django-admin', 'set_up_site', weebl_url, weebl_name])
 
 
 def load_fixtures():
+    hookenv.log('Loading fixtures...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
     check_call(['django-admin', 'loaddata', 'initial_settings.yaml'])
 
 
 def migrate_db():
+    hookenv.log('Migrating database...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
     check_call(['django-admin', 'migrate', '--noinput'])
 
 
 def install_npm_deps():
+    hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
     npm_packages = ["d3", "nvd3", "angular-nvd3"]
     command = ["npm", "install", "--prefix", JSLIBS_DIR] + npm_packages
@@ -104,13 +111,9 @@ def install_npm_deps():
 
 
 def install_weebl(*args, **kwargs):
-    hookenv.log('Installing weebl!')
     install_weebl_deb()
-    hookenv.log('Installing pip packages!')
     install_pip_deps()
-    hookenv.log('Collecting static files!')
     collect_static()
-    hookenv.log('Installing npm packages!')
     install_npm_deps()
     setup_weebl_gunicorn_service()
     migrate_db()
