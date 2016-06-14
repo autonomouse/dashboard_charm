@@ -61,7 +61,6 @@ def setup_weebl_gunicorn_service():
 @hook('config-changed')
 def update_weebl():
     install_weebl_deb()
-    #migrate_db()
     restart_weebl_gunicorn_service()
 
 
@@ -96,12 +95,6 @@ def load_fixtures():
     check_call(['django-admin', 'loaddata', 'initial_settings.yaml'])
 
 
-def migrate_db():
-    hookenv.log('Migrating database...')
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    check_call(['django-admin', 'migrate', '--noinput'])
-
-
 def install_npm_deps():
     hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
@@ -116,7 +109,6 @@ def install_weebl(*args, **kwargs):
     collect_static()
     install_npm_deps()
     setup_weebl_gunicorn_service()
-    migrate_db()
     check_call(['service', 'weebl-gunicorn', 'start'])
     check_call(['service', 'nginx', 'restart'])
     hookenv.log('Loading fixtures...')
