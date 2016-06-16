@@ -2,6 +2,7 @@
 import os
 import errno
 import yaml
+import shlex
 
 from subprocess import check_call
 
@@ -11,6 +12,7 @@ from charmhelpers.fetch import (
     add_source,
     apt_update,
     apt_install,
+    filter_installed_packages
     )
 
 from charms.reactive import (
@@ -26,6 +28,7 @@ JSLIBS_DIR = '/var/lib/weebl/static'
 
 
 config = hookenv.config()
+weebl_pkg = 'python3-weebl'
 
 
 def mkdir_p(directory_name):
@@ -46,8 +49,8 @@ def install_pip_deps():
     # TODO: remove pip usage once weebl drops swagger.
     hookenv.log('Installing pip packages!')
     pip_packages = ["django-tastypie-swagger", "django-extensions"]
-    command = ["python3", "-m", "pip", "install"] + pip_packages
-    check_call(command)
+    command = "python3.4 -m pip install"
+    check_call(shlex.split(command) + pip_packages)
 
 
 def setup_weebl_gunicorn_service():
@@ -55,17 +58,31 @@ def setup_weebl_gunicorn_service():
         source="weebl-gunicorn.service",
         target="/lib/systemd/system/weebl-gunicorn.service",
         context={})
-    check_call(['systemctl', 'enable', 'weebl-gunicorn'])
+    command = "systemctl enable weebl-gunicorn"
+    check_call(shlex.split(command))
+
+
+def pkg_is_installed(pkg):
+    command = "dpkg -l " + pkg
+    try:
+        dpkg = check_output(shlex.split(command)).decode('utf-8')
+        return " " + pkg + " " in dpkg.split('\n')[-2]
+    except Exception:
+        return False
 
 
 @hook('config-changed')
 def update_weebl():
-    install_weebl_deb()
-    restart_weebl_gunicorn_service()
+    # Only update if it has already been installed:
+    if pkg_is_installed(weebl_pkg):
+        install_weebl_deb()  # update pkg
+        migrate_db()
+        restart_weebl_gunicorn_service()
 
 
 def restart_weebl_gunicorn_service():
-    check_call(['systemctl', 'restart', 'weebl-gunicorn'])
+    command = "systemctl restart weebl-gunicorn"
+    check_call(shlex.split(command))
 
 
 def install_weebl_deb():
@@ -74,25 +91,34 @@ def install_weebl_deb():
     ppa_key = config['ppa_key']
     add_source(ppa, ppa_key)
     apt_update()
-    apt_install(['python3-weebl'])
+    apt_install([weebl_pkg])
 
 
 def collect_static():
     hookenv.log('Collecting static files...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    check_call(['django-admin', 'collectstatic', '--noinput'])
+    command = "django-admin collectstatic --noinput"
+    check_call(shlex.split(command))
 
 
 def setup_weebl_site(weebl_url, weebl_name):
     hookenv.log('Setting up weebl site...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    check_call(['django-admin', 'set_up_site', weebl_url, weebl_name])
-
+    command = "django-admin set_up_site {} {}".format(weebl_url, weebl_name)
+    check_call(shlex.split(command))
 
 def load_fixtures():
     hookenv.log('Loading fixtures...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    check_call(['django-admin', 'loaddata', 'initial_settings.yaml'])
+    command = "django-admin loaddata initial_settings.yaml"
+    check_call(shlex.split(command))
+
+
+def migrate_db():
+    hookenv.log('Migrating database...')
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
+    command = "django-admin migrate --noinput"
+    check_call(shlex.split(command))
 
 
 def install_npm_deps():
@@ -109,6 +135,7 @@ def install_weebl(*args, **kwargs):
     collect_static()
     install_npm_deps()
     setup_weebl_gunicorn_service()
+    migrate_db()
     check_call(['service', 'weebl-gunicorn', 'start'])
     check_call(['service', 'nginx', 'restart'])
     hookenv.log('Loading fixtures...')
