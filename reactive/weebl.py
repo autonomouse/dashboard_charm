@@ -49,7 +49,7 @@ def install_pip_deps():
     # TODO: remove pip usage once weebl drops swagger.
     hookenv.log('Installing pip packages!')
     pip_packages = ["django-tastypie-swagger", "django-extensions"]
-    command = "python3.4 -m pip install"
+    command = "python3 -m pip install"
     check_call(shlex.split(command) + pip_packages)
 
 
