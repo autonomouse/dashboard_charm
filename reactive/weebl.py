@@ -62,22 +62,12 @@ def setup_weebl_gunicorn_service():
     check_call(shlex.split(command))
 
 
-def pkg_is_installed(pkg):
-    command = "dpkg -l " + pkg
-    try:
-        dpkg = check_output(shlex.split(command)).decode('utf-8')
-        return " " + pkg + " " in dpkg.split('\n')[-2]
-    except Exception:
-        return False
-
-
 @hook('config-changed')
+@when('weebl.available')
 def update_weebl():
-    # Only update if it has already been installed:
-    if pkg_is_installed(weebl_pkg):
-        install_weebl_deb()  # update pkg
-        migrate_db()
-        restart_weebl_gunicorn_service()
+    install_weebl_deb()  # update pkg
+    migrate_db()
+    restart_weebl_gunicorn_service()
 
 
 def restart_weebl_gunicorn_service():
@@ -143,6 +133,7 @@ def install_weebl(*args, **kwargs):
     weebl_url = config['weebl_url']
     weebl_name = config['weebl_name']
     setup_weebl_site(weebl_url, weebl_name)
+    set_state('weebl.available')
 
 def render_config(pgsql):
     db_settings = {
