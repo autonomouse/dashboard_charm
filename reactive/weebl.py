@@ -4,7 +4,7 @@ import errno
 import yaml
 import shlex
 
-from subprocess import check_call
+from subprocess import check_call, CalledProcessError
 
 from charmhelpers.core import hookenv
 from charmhelpers.core.templating import render
@@ -94,8 +94,14 @@ def collect_static():
 def setup_weebl_site(weebl_url, weebl_name):
     hookenv.log('Setting up weebl site...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    command = "django-admin set_up_site {} {}".format(weebl_url, weebl_name)
-    check_call(shlex.split(command))
+    command = "django-admin set_up_site \"{}\" \"{}\"".format(
+        weebl_url, weebl_name)
+    try:
+        check_call(shlex.split(command))
+    except CalledProcessError:
+        err_msg = "Error setting up weebl"
+        hookenv.log(err_msg)
+
 
 def load_fixtures():
     hookenv.log('Loading fixtures...')
