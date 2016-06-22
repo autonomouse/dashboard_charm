@@ -12,7 +12,6 @@ from charmhelpers.fetch import (
     add_source,
     apt_update,
     apt_install,
-    filter_installed_packages
     )
 
 from charms.reactive import (
