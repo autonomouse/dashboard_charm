@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+
+from lib import common
+
+common.update_weebl()
