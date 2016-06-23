@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
-from lib import common
+import uuid
+from charmhelpers.core import hookenv
 
-common.update_weebl()
+config = hookenv.config()
+config['uuid'] = str(uuid.uuid4())
