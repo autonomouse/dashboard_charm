@@ -2,8 +2,9 @@
 import os
 import errno
 import yaml
+import shlex
 
-from subprocess import check_call
+from subprocess import check_call, CalledProcessError
 
 from charmhelpers.core import hookenv
 from charmhelpers.core.templating import render
@@ -26,6 +27,7 @@ JSLIBS_DIR = '/var/lib/weebl/static'
 
 
 config = hookenv.config()
+weebl_pkg = 'python3-weebl'
 
 
 def mkdir_p(directory_name):
@@ -44,9 +46,10 @@ def request_db(pgsql):
 
 def install_pip_deps():
     # TODO: remove pip usage once weebl drops swagger.
+    hookenv.log('Installing pip packages!')
     pip_packages = ["django-tastypie-swagger", "django-extensions"]
-    command = ["python3.4", "-m", "pip", "install"] + pip_packages
-    check_call(command)
+    command = "python3 -m pip install"
+    check_call(shlex.split(command) + pip_packages)
 
 
 def setup_weebl_gunicorn_service():
@@ -54,30 +57,49 @@ def setup_weebl_gunicorn_service():
         source="weebl-gunicorn.service",
         target="/lib/systemd/system/weebl-gunicorn.service",
         context={})
-    check_call(['systemctl', 'enable', 'weebl-gunicorn'])
+    command = "systemctl enable weebl-gunicorn"
+    check_call(shlex.split(command))
 
 
 @hook('config-changed')
+@when('weebl.available')
 def update_weebl():
-    install_weebl_deb()
+    install_weebl_deb()  # update pkg
+    # collect_static() and migrate_db() now done in weebl pkg postinst script
     restart_weebl_gunicorn_service()
 
 
 def restart_weebl_gunicorn_service():
-    check_call(['systemctl', 'restart', 'weebl-gunicorn'])
+    command = "systemctl restart weebl-gunicorn"
+    check_call(shlex.split(command))
 
 
 def install_weebl_deb():
+    hookenv.log('Installing/upgrading weebl!')
     ppa = config['ppa']
     ppa_key = config['ppa_key']
     add_source(ppa, ppa_key)
     apt_update()
-    apt_install(['python3-weebl'])
+    apt_install([weebl_pkg])
 
 
 def collect_static():
+    hookenv.log('Collecting static files...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    check_call(['django-admin', 'collectstatic', '--noinput'])
+    command = "django-admin collectstatic --noinput"
+    check_call(shlex.split(command))
+
+
+def setup_weebl_site(weebl_url, weebl_name):
+    hookenv.log('Setting up weebl site...')
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
+    command = "django-admin set_up_site \"{}\" \"{}\"".format(
+        weebl_url, weebl_name)
+    try:
+        check_call(shlex.split(command))
+    except CalledProcessError:
+        err_msg = "Error setting up weebl"
+        hookenv.log(err_msg)
 
 
 def setup_weebl_site(weebl_url, weebl_name):
@@ -86,16 +108,21 @@ def setup_weebl_site(weebl_url, weebl_name):
 
 
 def load_fixtures():
+    hookenv.log('Loading fixtures...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    check_call(['django-admin', 'loaddata', 'initial_settings.yaml'])
+    command = "django-admin loaddata initial_settings.yaml"
+    check_call(shlex.split(command))
 
 
 def migrate_db():
+    hookenv.log('Migrating database...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    check_call(['django-admin', 'migrate', '--noinput'])
+    command = "django-admin migrate --noinput"
+    check_call(shlex.split(command))
 
 
 def install_npm_deps():
+    hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
     npm_packages = ["d3", "nvd3", "angular-nvd3"]
     command = ["npm", "install", "--prefix", JSLIBS_DIR] + npm_packages
@@ -103,13 +130,9 @@ def install_npm_deps():
 
 
 def install_weebl(*args, **kwargs):
-    hookenv.log('Installing weebl!')
     install_weebl_deb()
-    hookenv.log('Installing pip packages!')
     install_pip_deps()
-    hookenv.log('Collecting static files!')
     collect_static()
-    hookenv.log('Installing npm packages!')
     install_npm_deps()
     setup_weebl_gunicorn_service()
     migrate_db()
@@ -120,7 +143,7 @@ def install_weebl(*args, **kwargs):
     weebl_url = config['weebl_url']
     weebl_name = config['weebl_name']
     setup_weebl_site(weebl_url, weebl_name)
-
+    set_state('weebl.available')
 
 def render_config(pgsql):
     db_settings = {

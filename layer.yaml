@@ -1,1 +1,2 @@
 includes: ['layer:nginx', 'interface:pgsql']
+repo: "bzr+ssh://bazaar.launchpad.net/~oil-ci/oil-ci/charm-weebl/"
