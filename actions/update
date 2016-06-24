@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
+#!/usr/bin/env bash
 
-import uuid
-from charmhelpers.core import hookenv
-
-config = hookenv.config()
-config['uuid'] = str(uuid.uuid4())
+./hooks/config-changed

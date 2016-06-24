@@ -65,8 +65,7 @@ def setup_weebl_gunicorn_service():
 @when('weebl.available')
 def update_weebl():
     install_weebl_deb()  # update pkg
-    collect_static()
-    migrate_db()
+    # collect_static() and migrate_db() now done in weebl pkg postinst script
     restart_weebl_gunicorn_service()
 
 
