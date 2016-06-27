@@ -61,14 +61,6 @@ def setup_weebl_gunicorn_service():
     check_call(shlex.split(command))
 
 
-@hook('config-changed')
-@when('weebl.available')
-def update_weebl():
-    install_weebl_deb()  # update pkg
-    # collect_static() and migrate_db() now done in weebl pkg postinst script
-    restart_weebl_gunicorn_service()
-
-
 def restart_weebl_gunicorn_service():
     command = "systemctl restart weebl-gunicorn"
     check_call(shlex.split(command))
@@ -81,13 +73,6 @@ def install_weebl_deb():
     add_source(ppa, ppa_key)
     apt_update()
     apt_install([weebl_pkg])
-
-
-def collect_static():
-    hookenv.log('Collecting static files...')
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    command = "django-admin collectstatic --noinput"
-    check_call(shlex.split(command))
 
 
 def setup_weebl_site(weebl_url, weebl_name):
@@ -132,10 +117,8 @@ def install_npm_deps():
 def install_weebl(*args, **kwargs):
     install_weebl_deb()
     install_pip_deps()
-    collect_static()
     install_npm_deps()
     setup_weebl_gunicorn_service()
-    migrate_db()
     check_call(['systemctl', 'start', 'weebl-gunicorn'])
     check_call(['systemctl', 'start', 'nginx'])
     hookenv.log('Loading fixtures...')
