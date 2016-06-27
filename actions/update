@@ -1,3 +1,4 @@
 #!/usr/bin/env bash
 
-./hooks/config-changed
+apt install python3-weebl
+systemctl restart weebl-gunicorn
