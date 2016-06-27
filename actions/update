@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 
+apt update
 apt --yes install python3-weebl
 systemctl restart weebl-gunicorn
