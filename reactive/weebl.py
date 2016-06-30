@@ -129,7 +129,7 @@ def render_config(pgsql):
     }
     config = {
         'database': db_settings,
-        'static_root': '/var/lib/weebl/static',
+        'static_root': JSLIBS_DIR,
     }
     mkdir_p('/etc/weebl/')
     with open('/etc/weebl/weebl.yaml', 'w') as weebl_db:
