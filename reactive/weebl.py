@@ -44,14 +44,6 @@ def request_db(pgsql):
     pgsql.request_roles('weebl')
 
 
-def install_pip_deps():
-    # TODO: remove pip usage once weebl drops swagger.
-    hookenv.log('Installing pip packages!')
-    pip_packages = ["django-tastypie-swagger", "django-extensions"]
-    command = "python3 -m pip install"
-    check_call(shlex.split(command) + pip_packages)
-
-
 def setup_weebl_gunicorn_service():
     render(
         source="weebl-gunicorn.service",
@@ -116,7 +108,6 @@ def install_npm_deps():
 
 def install_weebl(*args, **kwargs):
     install_weebl_deb()
-    install_pip_deps()
     install_npm_deps()
     setup_weebl_gunicorn_service()
     check_call(['systemctl', 'start', 'weebl-gunicorn'])
