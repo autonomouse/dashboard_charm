@@ -38,6 +38,12 @@ def mkdir_p(directory_name):
             raise exc
 
 
+def cmd_service(cmd, service):
+    command = "systemctl {} {}".format(cmd, service)
+    hookenv.log(command)
+    check_call(shlex.split(command))
+
+
 @hook('db-relation-joined')
 def request_db(pgsql):
     pgsql.change_database_name('bugs_database')
@@ -49,13 +55,7 @@ def setup_weebl_gunicorn_service():
         source="weebl-gunicorn.service",
         target="/lib/systemd/system/weebl-gunicorn.service",
         context={})
-    command = "systemctl enable weebl-gunicorn"
-    check_call(shlex.split(command))
-
-
-def restart_weebl_gunicorn_service():
-    command = "systemctl restart weebl-gunicorn"
-    check_call(shlex.split(command))
+    cmd_service('enable', 'weebl-gunicorn')
 
 
 def install_weebl_deb():
@@ -79,11 +79,6 @@ def setup_weebl_site(weebl_url, weebl_name):
         hookenv.log(err_msg)
 
 
-def setup_weebl_site(weebl_url, weebl_name):
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    check_call(['django-admin', 'set_up_site', weebl_url, weebl_name])
-
-
 def load_fixtures():
     hookenv.log('Loading fixtures...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
@@ -101,23 +96,26 @@ def migrate_db():
 def install_npm_deps():
     hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
-    npm_packages = ["d3", "nvd3", "angular-nvd3"]
-    command = ["npm", "install", "--prefix", JSLIBS_DIR] + npm_packages
-    check_call(command)
+    npm_pkgs = [
+        "d3@3.5.17",
+        "nvd3@1.8.3",
+        "angular-nvd3@1.0.7"]
+    for npm_pkg in npm_pkgs:
+        command = "npm install --prefix {} {}".format(
+            JSLIBS_DIR, npm_pkg)
+        check_call(shlex.split(command))
 
 
 def install_weebl(*args, **kwargs):
     install_weebl_deb()
     install_npm_deps()
     setup_weebl_gunicorn_service()
-    check_call(['systemctl', 'start', 'weebl-gunicorn'])
-    check_call(['systemctl', 'start', 'nginx'])
-    hookenv.log('Loading fixtures...')
+    cmd_service('start', 'weebl-gunicorn')
+    cmd_service('restart', 'nginx')
     load_fixtures()
-    weebl_url = config['weebl_url']
-    weebl_name = config['weebl_name']
-    setup_weebl_site(weebl_url, weebl_name)
+    setup_weebl_site(config['weebl_url'], config['weebl_name'])
     set_state('weebl.available')
+
 
 def render_config(pgsql):
     db_settings = {
