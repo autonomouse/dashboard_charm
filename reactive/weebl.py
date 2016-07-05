@@ -67,11 +67,10 @@ def install_weebl_deb():
     apt_install([weebl_pkg])
 
 
-def setup_weebl_site(weebl_url, weebl_name):
+def setup_weebl_site(weebl_name):
     hookenv.log('Setting up weebl site...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    command = "django-admin set_up_site \"{}\" \"{}\"".format(
-        weebl_url, weebl_name)
+    command = "django-admin set_up_site \"{}\"".format(weebl_name)
     try:
         check_call(shlex.split(command))
     except CalledProcessError:
@@ -113,7 +112,7 @@ def install_weebl(*args, **kwargs):
     cmd_service('start', 'weebl-gunicorn')
     cmd_service('restart', 'nginx')
     load_fixtures()
-    setup_weebl_site(config['weebl_url'], config['weebl_name'])
+    setup_weebl_site(config['weebl_name'])
     set_state('weebl.available')
 
 
