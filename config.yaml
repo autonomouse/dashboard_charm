@@ -11,7 +11,3 @@ options:
     type: string
     default:
     description: Name of this instance of Weebl (e.g. Production Weebl).
-  weebl_url:
-    type: string
-    default:
-    description: URL of this instance of Weebl.
