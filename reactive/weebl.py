@@ -62,9 +62,13 @@ def install_weebl_deb():
     hookenv.log('Installing/upgrading weebl!')
     ppa = config['ppa']
     ppa_key = config['ppa_key']
-    add_source(ppa, ppa_key)
-    apt_update()
-    apt_install([weebl_pkg])
+    try:
+        add_source(ppa, ppa_key)
+        apt_update()
+        apt_install([weebl_pkg])
+    except Exception:
+        return False
+    return True
 
 
 def setup_weebl_site(weebl_name):
@@ -93,6 +97,7 @@ def migrate_db():
 
 
 def install_npm_deps():
+    weebl_ready = True
     hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
     npm_pkgs = [
@@ -102,18 +107,28 @@ def install_npm_deps():
     for npm_pkg in npm_pkgs:
         command = "npm install --prefix {} {}".format(
             JSLIBS_DIR, npm_pkg)
-        check_call(shlex.split(command))
+        try:
+            check_call(shlex.split(command))
+        except CalledProcessError:
+            err_msg = "Failed to install {} via npm".format(npm_pkg)
+            hookenv.log(err_msg)
+            weebl_ready = False
+    return weebl_ready
 
 
 def install_weebl(*args, **kwargs):
-    install_weebl_deb()
-    install_npm_deps()
+    weebl_ready = False
+    if install_weebl_deb():
+        weebl_ready = install_npm_deps()
     setup_weebl_gunicorn_service()
     cmd_service('start', 'weebl-gunicorn')
     cmd_service('restart', 'nginx')
     load_fixtures()
     setup_weebl_site(config['weebl_name'])
-    set_state('weebl.available')
+    if weebl_ready:
+        set_state('weebl.available')
+    else:
+        hookenv.status_set('error', 'Weebl installation failed')
 
 
 def render_config(pgsql):
