@@ -44,8 +44,9 @@ def cmd_service(cmd, service):
     check_call(shlex.split(command))
 
 
-@hook('db-relation-joined')
+@when('database.connected')
 def request_db(pgsql):
+    hookenv.log('Setting db relation options')
     pgsql.change_database_name('bugs_database')
     pgsql.set_remote('extensions', 'tablefunc')
     pgsql.request_roles('weebl')
