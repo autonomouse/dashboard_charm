@@ -47,6 +47,7 @@ def cmd_service(cmd, service):
 @hook('db-relation-joined')
 def request_db(pgsql):
     pgsql.change_database_name('bugs_database')
+    pgsql.set_remote('extensions', 'tablefunc')
     pgsql.request_roles('weebl')
 
 
