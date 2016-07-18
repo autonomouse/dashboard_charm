@@ -66,6 +66,9 @@ def install_weebl_deb():
     ppa_key = config['ppa_key']
     try:
         add_source(ppa, ppa_key)
+    except Exception:
+        pass
+    try:
         apt_update()
         apt_install([weebl_pkg])
     except Exception:
