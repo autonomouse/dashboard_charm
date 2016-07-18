@@ -67,7 +67,7 @@ def install_weebl_deb():
     try:
         add_source(ppa, ppa_key)
     except Exception:
-        pass
+        hookenv.log("Error adding source PPA: {}".format(ppa))
     try:
         apt_update()
         apt_install([weebl_pkg])
