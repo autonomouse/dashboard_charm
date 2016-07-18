@@ -71,7 +71,8 @@ def install_weebl_deb():
     try:
         apt_update()
         apt_install([weebl_pkg])
-    except Exception:
+    except Exception as e:
+        hookenv.log(str(e))
         return False
     return True
 
