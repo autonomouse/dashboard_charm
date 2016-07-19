@@ -4,6 +4,8 @@ import errno
 import yaml
 import shlex
 
+from uuid import uuid4
+from random import randint
 from subprocess import check_call, CalledProcessError
 
 from charmhelpers.core import hookenv
@@ -88,6 +90,23 @@ def setup_weebl_site(weebl_name):
         hookenv.log(err_msg)
 
 
+def create_default_user():
+    username = "CanonicalOilCiBot"
+    email = "oil-ci-bot@canonical.com"
+    provider = "ubuntu"
+    uid = "oil-ci-bot"
+    hookenv.log('Setting up {} as the default user...'.format(username))
+    apikey = str(uuid4()).replace('-', str(randint(0, 9) * 2)) # 40 char key
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
+    command = "django-admin preseed_default_superuser \"{}\"".format(
+        username, email, provider, uid, apikey)
+    try:
+        check_call(shlex.split(command))
+    except CalledProcessError:
+        err_msg = "Error setting up default user"
+        hookenv.log(err_msg)
+
+
 def load_fixtures():
     hookenv.log('Loading fixtures...')
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
@@ -131,6 +150,7 @@ def install_weebl(*args, **kwargs):
     cmd_service('restart', 'nginx')
     load_fixtures()
     setup_weebl_site(config['weebl_name'])
+    create_default_user
     if weebl_ready:
         set_state('weebl.available')
     else:
