@@ -135,6 +135,7 @@ def install_weebl(*args, **kwargs):
         set_state('weebl.available')
     else:
         hookenv.status_set('maintenance', 'Weebl installation failed')
+        raise Exception('Weebl installation failed')
 
 
 def render_config(pgsql):
