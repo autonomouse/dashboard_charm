@@ -13,5 +13,5 @@ options:
     description: Name of this instance of Weebl (e.g. Production Weebl).
   extra_options:
     type: string
-    default:
+    default: ""
     description: Extra options to put in the systemd service file.
