@@ -56,7 +56,7 @@ def setup_weebl_gunicorn_service():
     render(
         source="weebl-gunicorn.service",
         target="/lib/systemd/system/weebl-gunicorn.service",
-        context={})
+        context={'extra_options': config['extra_options']})
     cmd_service('enable', 'weebl-gunicorn')
 
 
