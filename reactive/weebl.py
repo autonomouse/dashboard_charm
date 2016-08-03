@@ -47,9 +47,9 @@ def cmd_service(cmd, service):
 @when('database.connected')
 def request_db(pgsql):
     hookenv.log('Setting db relation options')
-    pgsql.change_database_name('bugs_database')
+    pgsql.set_database('bugs_database')
     pgsql.set_remote('extensions', 'tablefunc')
-    pgsql.request_roles('weebl')
+    pgsql.set_remote('roles', 'weebl')
 
 
 def setup_weebl_gunicorn_service():
