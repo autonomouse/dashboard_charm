@@ -131,11 +131,17 @@ def install_weebl(*args, **kwargs):
     cmd_service('restart', 'nginx')
     load_fixtures()
     setup_weebl_site(config['weebl_name'])
+    fix_bundle_dir_permissions()
     if weebl_ready:
         set_state('weebl.available')
     else:
         hookenv.status_set('maintenance', 'Weebl installation failed')
         raise Exception('Weebl installation failed')
+
+
+def fix_bundle_dir_permissions():
+    command = "chmod 757 -R {}/img/bundles/".format(JSLIBS_DIR)
+    check_call(shlex.split(command))
 
 
 def render_config(pgsql):
