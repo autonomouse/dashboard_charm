@@ -142,8 +142,6 @@ def install_weebl(*args, **kwargs):
 def fix_bundle_dir_permissions():
     chown_cmd = "chown www-data {}/img/bundles/".format(JSLIBS_DIR)
     check_call(shlex.split(chown_cmd))
-    chmod_cmd = "chmod 770 {}/img/bundles/".format(JSLIBS_DIR)
-    check_call(shlex.split(chmod_cmd))
 
 
 def render_config(pgsql):
