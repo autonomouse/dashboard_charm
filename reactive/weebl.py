@@ -146,22 +146,22 @@ def fix_bundle_dir_permissions():
 
 def render_config(pgsql):
     db_settings = {
-        'host':  pgsql.host(),
-        'port': pgsql.port(),
-        'database': pgsql.database(),
-        'user': pgsql.user(),
-        'password': pgsql.password(),
+        'host':  pgsql.master['host'],
+        'port': pgsql.master['port'],
+        'database': pgsql.master['database'],
+        'user': pgsql.master['user'],
+        'password': pgsql.master['password'],
     }
-    config = {
+    db_config = {
         'database': db_settings,
         'static_root': JSLIBS_DIR,
     }
     mkdir_p('/etc/weebl/')
     with open('/etc/weebl/weebl.yaml', 'w') as weebl_db:
-        weebl_db.write(yaml.dump(config))
+        weebl_db.write(yaml.dump(db_config))
 
 
-@when('database.database.available', 'nginx.available')
+@when('database.master.available', 'nginx.available')
 def setup_database(pgsql):
     hookenv.log('Configuring weebl db!')
     hookenv.status_set('maintenance', 'weebl is connecting to pgsql!')
