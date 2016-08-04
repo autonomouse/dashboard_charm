@@ -15,12 +15,8 @@ from charmhelpers.fetch import (
     )
 
 from charms.reactive import (
-    hook,
     when,
-    only_once,
     set_state,
-    get_states,
-    remove_state,
     )
 
 
@@ -124,9 +120,8 @@ def install_npm_deps():
     return weebl_ready
 
 
-@when('config.changed')
+@when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
-    hookenv.log('states: ' + str(get_states()))
     weebl_ready = False
     if install_weebl_deb():
         weebl_ready = install_npm_deps()
