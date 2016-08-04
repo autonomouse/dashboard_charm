@@ -96,7 +96,8 @@ def create_default_user():
     hookenv.log('Setting up {} as the default user...'.format(username))
     apikey = str(uuid4()).replace('-', str(randint(0, 9) * 2)) # 40 char key
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    command = "django-admin preseed_default_superuser \"{}\"".format(
+    command = "django-admin preseed_default_superuser "
+    command += "\"{0}\" \"{1}\" \"{2}\" \"{3}\" \"{4}\"".format(
         username, email, provider, uid, apikey)
     try:
         check_call(shlex.split(command))
