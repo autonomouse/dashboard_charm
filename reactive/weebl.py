@@ -101,8 +101,10 @@ def create_default_user():
     try:
         check_call(shlex.split(command))
     except CalledProcessError:
-        err_msg = "Error setting up default user"
+        err_msg = "Error setting up default weebl user ({})".format(username)
         hookenv.log(err_msg)
+        hookenv.status_set('maintenance', err_msg)
+        raise Exception(err_msg)
 
 
 def load_fixtures():
