@@ -5,7 +5,10 @@
 charm build
 bzr checkout lp:~oil-ci/oil-ci/charm-weebl-BUILT builds/weebl-built
 cp -R builds/weebl-built/.bzr builds/weebl/
+rm -fr builds/weebl-built/builds
 log=$(bzr log -r-1 --line)
 cd builds/weebl
-bzr commit -am "$log"
+bzr add
+bzr commit -m "$log"
+cd ../..
 rm -fr builds deps
