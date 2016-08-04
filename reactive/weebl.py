@@ -148,7 +148,7 @@ def render_config(pgsql):
     db_settings = {
         'host':  pgsql.master['host'],
         'port': pgsql.master['port'],
-        'database': pgsql.master['database'],
+        'database': pgsql.master['dbname'],
         'user': pgsql.master['user'],
         'password': pgsql.master['password'],
     }
