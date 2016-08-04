@@ -19,6 +19,7 @@ from charms.reactive import (
     when,
     only_once,
     set_state,
+    get_states,
     remove_state,
     )
 
@@ -46,10 +47,11 @@ def cmd_service(cmd, service):
 
 @when('database.connected')
 def request_db(pgsql):
-    hookenv.log('Setting db relation options')
-    pgsql.set_database('bugs_database')
-    pgsql.set_remote('extensions', 'tablefunc')
-    pgsql.set_remote('roles', 'weebl')
+    if hookenv.in_relation_hook():
+        hookenv.log('Setting db relation options')
+        pgsql.set_database('bugs_database')
+        pgsql.set_remote('extensions', 'tablefunc')
+        pgsql.set_remote('roles', 'weebl')
 
 
 def setup_weebl_gunicorn_service():
@@ -122,7 +124,9 @@ def install_npm_deps():
     return weebl_ready
 
 
+@when('config.changed')
 def install_weebl(*args, **kwargs):
+    hookenv.log('states: ' + str(get_states()))
     weebl_ready = False
     if install_weebl_deb():
         weebl_ready = install_npm_deps()
@@ -163,8 +167,9 @@ def render_config(pgsql):
 
 @when('database.master.available', 'nginx.available')
 def setup_database(pgsql):
-    hookenv.log('Configuring weebl db!')
-    hookenv.status_set('maintenance', 'weebl is connecting to pgsql!')
-    render_config(pgsql)
-    install_weebl()
-    hookenv.status_set('active', 'Ready')
+    if hookenv.in_relation_hook():
+        hookenv.log('Configuring weebl db!')
+        hookenv.status_set('maintenance', 'weebl is connecting to pgsql!')
+        render_config(pgsql)
+        install_weebl()
+        hookenv.status_set('active', 'Ready')
