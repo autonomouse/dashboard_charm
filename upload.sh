@@ -3,6 +3,13 @@
 
 [[ -n "$(bzr status | grep -v shelve)" ]] && echo "Repo not clean" && exit 1
 
+
+function tidy_up () (
+    rm -fr builds deps
+)
+
+trap tidy_up ERR
+
 userstr=$(charm whoami | grep "User")
 userstringarray=($userstr)
 USER=${userstringarray[1]}
@@ -31,4 +38,4 @@ cd builds/weebl
 bzr add
 bzr commit -m "$log"
 cd ../..
-rm -fr builds deps
+tidy_up
