@@ -2,11 +2,31 @@
 # Should be run from top of source tree
 
 [[ -n "$(bzr status | grep -v shelve)" ]] && echo "Repo not clean" && exit 1
+
 userstr=$(charm whoami | grep "User")
-stringarray=($userstr)
-echo Logged in as ${stringarray[1]}
+userstringarray=($userstr)
+USER=${userstringarray[1]}
+echo Logged in as $USER
+
 charm build
-charm push builds/weebl/ weebl
+
+output=$(charm push builds/weebl/ weebl)
+charmstringarray=($output)
+CHARM=${charmstringarray[1]}
+
+while [ ! $# -eq 0 ]
+do
+    case "$1" in
+        --publish | -p)
+            charm publish $CHARM --channel stable
+            exit
+            ;;
+    esac
+    shift
+done
+
+
+
 bzr checkout lp:~oil-ci/oil-ci/charm-weebl-BUILT builds/weebl-built
 cp -R builds/weebl-built/.bzr builds/weebl/
 rm -fr builds/weebl-built/builds
