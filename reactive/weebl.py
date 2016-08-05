@@ -88,13 +88,9 @@ def setup_weebl_site(weebl_name):
         hookenv.log(err_msg)
 
 
-def create_default_user():
-    username = "CanonicalOilCiBot"
-    email = "oil-ci-bot@canonical.com"
+def create_default_user(username, email, uid, apikey):
     provider = "ubuntu"
-    uid = "oil-ci-bot"
     hookenv.log('Setting up {} as the default user...'.format(username))
-    apikey = str(uuid4()).replace('-', str(randint(0, 9) * 2)) # 40 char key
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
     command = "django-admin preseed_default_superuser "
     command += "\"{0}\" \"{1}\" \"{2}\" \"{3}\" \"{4}\"".format(
@@ -153,7 +149,8 @@ def install_weebl(*args, **kwargs):
     load_fixtures()
     setup_weebl_site(config['weebl_name'])
     fix_bundle_dir_permissions()
-    create_default_user()
+    create_default_user(
+        config['username'], config['email'], config['uid'], config['apikey'])
     if weebl_ready:
         set_state('weebl.available')
     else:
