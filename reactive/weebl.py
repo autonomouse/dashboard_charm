@@ -89,6 +89,9 @@ def setup_weebl_site(weebl_name):
 
 
 def create_default_user(username, email, uid, apikey):
+    if apikey in [None, ""]:
+        hookenv.log("No apikey provided - generating random apikey.")
+        apikey = str(uuid4()).replace('-', str(randint(0, 9) * 2))
     provider = "ubuntu"
     hookenv.log('Setting up {} as the default user...'.format(username))
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
