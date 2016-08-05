@@ -19,13 +19,9 @@ do
     case "$1" in
         --publish | -p)
             charm publish $CHARM --channel stable
-            exit
-            ;;
     esac
     shift
 done
-
-
 
 bzr checkout lp:~oil-ci/oil-ci/charm-weebl-BUILT builds/weebl-built
 cp -R builds/weebl-built/.bzr builds/weebl/
