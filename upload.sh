@@ -5,9 +5,11 @@
 
 
 function tidy_up () (
+    cd $startdir
     rm -fr builds deps
 )
 
+startdir=$(pwd)
 trap tidy_up ERR
 
 userstr=$(charm whoami | grep "User")
@@ -37,5 +39,5 @@ log=$(bzr log -r-1 --line)
 cd builds/weebl
 bzr add
 bzr commit -m "$log"
-cd ../..
+cd $startdir
 tidy_up
