@@ -29,5 +29,5 @@ options:
     description: User id of default admin user.
   apikey:
     type: string
-    default: "74f937de4ea3244bdd4bc404a70d0d24a174"
+    default: ""
     description: Random string of characters to enable API access.
