@@ -15,3 +15,19 @@ options:
     type: string
     default: ""
     description: Extra options to put in the systemd service file.
+  username:
+    type: string
+    default: "CanonicalOilCiBot"
+    description: Launchpad username of default admin user.
+  email:
+    type: string
+    default: "oil-ci-bot@canonical.com"
+    description: Email of default admin user, as registered in Lauchpad.
+  uid:
+    type: string
+    default: "oil-ci-bot"
+    description: User id of default admin user.
+  apikey:
+    type: string
+    default: None
+    description: Random string of characters to enable API access.
