@@ -1,2 +1,5 @@
-includes: ['layer:nginx', 'interface:pgsql']
+includes:
+- layer:nginx
+- interface:pgsql
+- interface:weebl
 repo: "bzr+ssh://bazaar.launchpad.net/~oil-ci/oil-ci/charm-weebl/"

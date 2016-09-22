@@ -7,3 +7,6 @@ tags: ['weebl', 'OIL', 'OIL dashboard']
 requires:
     database:
         interface: pgsql
+provides:
+    weebl:
+      interface: weebl

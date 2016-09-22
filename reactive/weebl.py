@@ -142,6 +142,13 @@ def install_npm_deps():
     return weebl_ready
 
 
+@when('weebl.connected')
+def send_weebl_info(weebl):
+    weebl.provide_weebl_credentials(
+        weebl_username=config['username'],
+        weebl_apikey=config['apikey'])
+
+
 @when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
     weebl_ready = False
