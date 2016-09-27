@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import errno
 import shlex
 from charmhelpers.fetch import (
     add_source,

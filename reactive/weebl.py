@@ -2,7 +2,6 @@
 import os
 import shlex
 import yaml
-import errno
 from random import choice
 from charms.reactive import (
     when,
@@ -95,7 +94,7 @@ def install_weebl(*args, **kwargs):
     utils.cmd_service('restart', 'nginx', hookenv)
     load_fixtures()
     setup_weebl_site(config['weebl_name'])
-    utils.fix_bundle_dir_permissions(JSLIBS_DIR)
+    utils.fix_bundle_dir_permissions()
     if not weebl_ready:
         hookenv.status_set('maintenance', 'Weebl installation failed')
         raise Exception('Weebl installation failed')
