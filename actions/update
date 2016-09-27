@@ -1,6 +1,10 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
-apt update
-apt --yes install python3-weebl
-chown www-data /var/lib/weebl/static/img/bundles
-systemctl restart weebl-gunicorn
+from charms.layer.weebl import utils
+from charmhelpers.core import hookenv
+from charms.layer.weebl.constants import WEEBL_PKG
+
+config = hookenv.config()
+utils.install_deb(WEEBL_PKG, config)
+utils.fix_bundle_dir_permissions()
+utils.cmd_service('restart', 'nginx', hookenv)

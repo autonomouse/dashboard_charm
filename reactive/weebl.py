@@ -1,47 +1,20 @@
 #!/usr/bin/env python3
 import os
-import errno
-import yaml
 import shlex
-
-from string import hexdigits
+import yaml
+import errno
 from random import choice
-
-from subprocess import check_call, CalledProcessError
-
-from charmhelpers.core import hookenv
-from charmhelpers.core.templating import render
-from charmhelpers.fetch import (
-    add_source,
-    apt_update,
-    apt_install,
-    )
-
 from charms.reactive import (
     when,
     set_state,
     )
-
-
-JSLIBS_DIR = '/var/lib/weebl/static'
-
+from charmhelpers.core import hookenv
+from charmhelpers.core.templating import render
+from subprocess import check_call, CalledProcessError
+from charms.layer.weebl import utils
+from charms.layer.weebl.constants import JSLIBS_DIR, WEEBL_PKG
 
 config = hookenv.config()
-weebl_pkg = 'python3-weebl'
-
-
-def mkdir_p(directory_name):
-    try:
-        os.makedirs(directory_name)
-    except OSError as exc:
-        if exc.errno != errno.EEXIST or not os.path.isdir(directory_name):
-            raise exc
-
-
-def cmd_service(cmd, service):
-    command = "systemctl {} {}".format(cmd, service)
-    hookenv.log(command)
-    check_call(shlex.split(command))
 
 
 @when('database.connected')
@@ -58,24 +31,7 @@ def setup_weebl_gunicorn_service():
         source="weebl-gunicorn.service",
         target="/lib/systemd/system/weebl-gunicorn.service",
         context={'extra_options': config['extra_options']})
-    cmd_service('enable', 'weebl-gunicorn')
-
-
-def install_weebl_deb():
-    hookenv.log('Installing/upgrading weebl!')
-    ppa = config['ppa']
-    ppa_key = config['ppa_key']
-    try:
-        add_source(ppa, ppa_key)
-    except Exception:
-        hookenv.log("Error adding source PPA: {}".format(ppa))
-    try:
-        apt_update()
-        apt_install([weebl_pkg])
-    except Exception as e:
-        hookenv.log(str(e))
-        return False
-    return True
+    utils.cmd_service('enable', 'weebl-gunicorn', hookenv)
 
 
 def setup_weebl_site(weebl_name):
@@ -87,14 +43,6 @@ def setup_weebl_site(weebl_name):
     except CalledProcessError:
         err_msg = "Error setting up weebl"
         hookenv.log(err_msg)
-
-
-def get_or_generate_apikey():
-    if config['apikey'] not in [None, ""]:
-        return config['apikey']
-    else:
-        hookenv.log("No apikey provided - generating random apikey.")
-        return ''.join([choice(hexdigits[:16]) for _ in range(40)])
 
 
 def create_default_user(username, email, uid, apikey):
@@ -115,7 +63,7 @@ def create_default_user(username, email, uid, apikey):
 
 @when('oildashboard.connected', 'database.master.available', 'nginx.available')
 def set_default_credentials_and_send_to_weebl(oildashboard, *args, **kwargs):
-    apikey = get_or_generate_apikey()
+    apikey = utils.get_or_generate_apikey(config['apikey'])
     create_default_user(
         config['username'], config['email'], config['uid'], apikey)
     oildashboard.provide_weebl_credentials(
@@ -137,45 +85,20 @@ def migrate_db():
     check_call(shlex.split(command))
 
 
-def install_npm_deps():
-    weebl_ready = True
-    hookenv.log('Installing npm packages...')
-    mkdir_p(JSLIBS_DIR)
-    npm_pkgs = [
-        "d3@3.5.17",
-        "nvd3@1.8.3",
-        "angular-nvd3@1.0.7"]
-    for npm_pkg in npm_pkgs:
-        command = "npm install --prefix {} {}".format(
-            JSLIBS_DIR, npm_pkg)
-        try:
-            check_call(shlex.split(command))
-        except CalledProcessError:
-            err_msg = "Failed to install {} via npm".format(npm_pkg)
-            hookenv.log(err_msg)
-            weebl_ready = False
-    return weebl_ready
-
-
 @when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
     weebl_ready = False
-    if install_weebl_deb():
-        weebl_ready = install_npm_deps()
+    if utils.install_deb(WEEBL_PKG, config, hookenv):
+        weebl_ready = utils.install_npm_deps()
     setup_weebl_gunicorn_service()
-    cmd_service('start', 'weebl-gunicorn')
-    cmd_service('restart', 'nginx')
+    utils.cmd_service('start', 'weebl-gunicorn', hookenv)
+    utils.cmd_service('restart', 'nginx', hookenv)
     load_fixtures()
     setup_weebl_site(config['weebl_name'])
-    fix_bundle_dir_permissions()
+    utils.fix_bundle_dir_permissions(JSLIBS_DIR)
     if not weebl_ready:
         hookenv.status_set('maintenance', 'Weebl installation failed')
         raise Exception('Weebl installation failed')
-
-
-def fix_bundle_dir_permissions():
-    chown_cmd = "chown www-data {}/img/bundles/".format(JSLIBS_DIR)
-    check_call(shlex.split(chown_cmd))
 
 
 def render_config(pgsql):
@@ -190,7 +113,7 @@ def render_config(pgsql):
         'database': db_settings,
         'static_root': JSLIBS_DIR,
     }
-    mkdir_p('/etc/weebl/')
+    utils.mkdir_p('/etc/weebl/')
     with open('/etc/weebl/weebl.yaml', 'w') as weebl_db:
         weebl_db.write(yaml.dump(db_config))
 
