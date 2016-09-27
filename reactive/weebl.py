@@ -49,8 +49,8 @@ def request_db(pgsql):
     if hookenv.in_relation_hook():
         hookenv.log('Setting db relation options')
         pgsql.set_database('bugs_database')
-        pgsql.set_remote('extensions', 'tablefunc')
-        pgsql.set_remote('roles', 'weebl')
+        pgsql.set_extensions('tablefunc')
+        pgsql.set_roles('weebl')
 
 
 def setup_weebl_gunicorn_service():
@@ -89,10 +89,15 @@ def setup_weebl_site(weebl_name):
         hookenv.log(err_msg)
 
 
-def create_default_user(username, email, uid, apikey):
-    if apikey in [None, ""]:
+def get_or_generate_apikey():
+    if config['apikey'] not in [None, ""]:
+        return config['apikey']
+    else:
         hookenv.log("No apikey provided - generating random apikey.")
-        ''.join([choice(hexdigits[:16]) for _ in range(40)])
+        return ''.join([choice(hexdigits[:16]) for _ in range(40)])
+
+
+def create_default_user(username, email, uid, apikey):
     provider = "ubuntu"
     hookenv.log('Setting up {} as the default user...'.format(username))
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
@@ -106,6 +111,16 @@ def create_default_user(username, email, uid, apikey):
         hookenv.log(err_msg)
         hookenv.status_set('maintenance', err_msg)
         raise Exception(err_msg)
+
+
+@when('oildashboard.connected', 'database.master.available', 'nginx.available')
+def set_default_credentials_and_send_to_weebl(oildashboard, *args, **kwargs):
+    apikey = get_or_generate_apikey()
+    create_default_user(
+        config['username'], config['email'], config['uid'], apikey)
+    oildashboard.provide_weebl_credentials(
+        weebl_username=config['username'],
+        weebl_apikey=apikey)
 
 
 def load_fixtures():
@@ -142,13 +157,6 @@ def install_npm_deps():
     return weebl_ready
 
 
-@when('weebl.connected')
-def send_weebl_info(weebl):
-    weebl.provide_weebl_credentials(
-        weebl_username=config['username'],
-        weebl_apikey=config['apikey'])
-
-
 @when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
     weebl_ready = False
@@ -160,11 +168,7 @@ def install_weebl(*args, **kwargs):
     load_fixtures()
     setup_weebl_site(config['weebl_name'])
     fix_bundle_dir_permissions()
-    create_default_user(
-        config['username'], config['email'], config['uid'], config['apikey'])
-    if weebl_ready:
-        set_state('weebl.available')
-    else:
+    if not weebl_ready:
         hookenv.status_set('maintenance', 'Weebl installation failed')
         raise Exception('Weebl installation failed')
 

@@ -8,5 +8,5 @@ requires:
     database:
         interface: pgsql
 provides:
-    weebl:
+    oildashboard:
       interface: weebl
