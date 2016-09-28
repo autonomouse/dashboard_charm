@@ -22,7 +22,7 @@ class Uploader():
         self.publish = args['publish']
         self.print_username_or_exit_if_logged_out()
         try:
-            self.charm_build()
+            self.process_charm()
         finally:
             self.tidy_up()
 
@@ -43,10 +43,11 @@ class Uploader():
         if not user:
             print(output)
             sys.exit()
-        print("Logged in as {}.".format(user[0]))
+        print("Logged in as {}".format(user[0]))
 
 
     def tidy_up(self):
+        os.chdir(self.working_dir)
         self.rmdir(os.path.join(self.working_dir, 'builds'))
         self.rmdir(os.path.join(self.working_dir, 'deps'))
 
@@ -63,42 +64,44 @@ class Uploader():
         return subprocess.check_output(command, shell=True).strip().decode()
 
 
-    def charm_build(self):
+    def process_charm(self):
+        self.build_charm()
+        self.publish_charm()
+        self.update_built_charm()
+
+
+    def build_charm(self):
         self.cmd('charm build -o {}'.format(self.working_dir))
         build_dir = os.path.join(self.working_dir, "builds/weebl/")
         output = self.cmd('charm push {} {}'.format(build_dir, CHARMSTORE_LOC))
         self.charm = output.split('\n')[0].split(' ')[1]
-        if self.publish:
-            self.channel = self.publish_charm(self.charm)
-            print("This charm has been published to {}.".format(self.channel))
-        else:
+        print("The {} charm has been built and is temporarily in {}".format(
+            self.charm, build_dir))
+
+
+    def publish_charm(self):
+        if not self.publish:
             print("This charm has not been published.")
-        self.update_built_charm()
-
-
-    def publish_charm(self, charm):
+            return
         output = self.cmd('charm publish {} --channel {}'.format(
-            charm, self.publish))
-        channel = output.split(' ')[2]
-        return channel
+            self.charm, self.publish))
+        self.channel = output.split(' ')[2]
+        print("This charm has been published to {}.".format(self.channel))
+
 
     def update_built_charm(self):
         built_charm_repo = BUILT_CHARM_REPOS.get(self.publish)
-        import ipdb; ipdb.set_trace()
-        '''if not built_charm_repo:
+        if not built_charm_repo:
             return
-        output = self.cmd('bzr checkout $builtcharmrepo builds/weebl-built')
-        cp -R builds/weebl-built/.bzr builds/weebl/
-        rm -fr builds/weebl-built/builds
-        log=$(bzr log -r-1 --line)
-        cd builds/weebl
-        bzr add
-        bzr commit -m "$log"'''
-
-
-
-
-
+        built_dir = os.path.join(self.working_dir, "builds/weebl-built/")
+        self.cmd('bzr checkout {} {}'.format(built_charm_repo, built_dir))
+        self.cmd('cp -R builds/weebl-built/.bzr builds/weebl/')
+        self.cmd('rm -fr builds/weebl-built/builds')
+        log = self.cmd('bzr log -r-1 --line')
+        os.chdir(os.path.join(self.working_dir, 'builds/weebl'))
+        self.cmd('bzr add')
+        # This repo has a post-commit hook that automatically pushes to trunk:
+        self.cmd('bzr commit -m "{}"'.format(log))
 
 
     def parse_args(self):
