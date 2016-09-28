@@ -10,7 +10,8 @@ import subprocess
 
 CHARMSTORE_LOC = "cs:~oil-charms/weebl"
 BUILT_CHARM_REPOS = {
-    'stable': "lp:~oil-ci/oil-ci/charm-weebl-BUILT", }
+    'stable': "lp:~oil-ci/oil-ci/charm-weebl-BUILT",
+    'edge': 'lp:~autonomouse/oil-ci/charm-weebl-edge-BUILT', }
 
 
 class Uploader():
@@ -106,7 +107,8 @@ class Uploader():
         weebl_dir = os.path.join(self.working_dir, "builds/weebl/")
         built_dir = os.path.join(self.working_dir, "builds/weebl-built/")
         self.cmd('bzr checkout {} {}'.format(built_charm_repo, built_dir))
-        shutil.copytree('builds/weebl-built/.bzr', weebl_dir)
+        shutil.rmtree(os.path.join(weebl_dir, ".bzr"))
+        shutil.copytree(os.path.join(built_dir, '.bzr'), weebl_dir)
         shutil.rmtree(os.path.join(built_dir, "builds"))
         log = self.cmd('bzr log -r-1 --line')
         os.chdir(weebl_dir)
