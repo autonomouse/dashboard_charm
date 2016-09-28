@@ -18,13 +18,17 @@ class Uploader():
     def main(self):
         self.exit_if_repo_not_clean()
         self.working_dir = os.getcwd()
-        args = self.parse_args()
-        self.publish = args['publish']
+        self.get_args()
         self.print_username_or_exit_if_logged_out()
         try:
             self.process_charm()
         finally:
             self.tidy_up()
+
+
+    def get_args(self):
+        args = self.parse_args()
+        self.publish = args['publish']
 
 
     def exit_if_repo_not_clean(self):
