@@ -25,11 +25,17 @@ CHARM=${charmstringarray[1]}
 while [ ! $# -eq 0 ]
 do
     case "$1" in
-        --publish_development | -d)
-            pub_output=$(charm publish ${CHARM} --channel development)
-            ;;
         --publish_stable | -s)
             pub_output=$(charm publish ${CHARM} --channel stable)
+            ;;
+        --publish_candidate | -c)
+            pub_output=$(charm publish ${CHARM} --channel candidate)
+            ;;
+        --publish_beta | -b)
+            pub_output=$(charm publish ${CHARM} --channel beta)
+            ;;
+        --publish_edge | -e)
+            pub_output=$(charm publish ${CHARM} --channel edge)
             ;;
         --*)
             pub_output=''
