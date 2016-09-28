@@ -104,17 +104,20 @@ class Uploader():
         built_charm_repo = BUILT_CHARM_REPOS.get(self.publish)
         if not built_charm_repo:
             return
-        weebl_dir = os.path.join(self.working_dir, "builds/weebl/")
-        built_dir = os.path.join(self.working_dir, "builds/weebl-built/")
-        self.cmd('bzr checkout {} {}'.format(built_charm_repo, built_dir))
-        shutil.rmtree(os.path.join(weebl_dir, ".bzr"))
-        shutil.copytree(os.path.join(built_dir, '.bzr'), weebl_dir)
-        shutil.rmtree(os.path.join(built_dir, "builds"))
+        existing_built_weebl = os.path.join(self.working_dir, "builds/weebl-built/")
+        new_built_weebl = os.path.join(self.working_dir, "builds/weebl/")
+        self.cmd('bzr checkout {} {}'.format(built_charm_repo, existing_built_weebl))
+        shutil.copytree(
+            os.path.join(existing_built_weebl, '.bzr'),
+            os.path.join(new_built_weebl, '.bzr'))
+        shutil.rmtree(existing_built_weebl)
         log = self.cmd('bzr log -r-1 --line')
-        os.chdir(weebl_dir)
+        os.chdir(new_built_weebl)
         self.cmd('bzr add')
         # This repo has a post-commit hook that automatically pushes to trunk:
         self.cmd('bzr commit -m "{}"'.format(log))
+        print("The built version of this charm has been pushed to {}.".format(
+            built_charm_repo))
 
 
 def main():
