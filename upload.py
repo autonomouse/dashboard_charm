@@ -26,6 +26,12 @@ class Uploader():
             self.tidy_up()
 
 
+    def parse_args(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('publish', default=False)
+        return vars(parser.parse_args())
+
+
     def get_args(self):
         args = self.parse_args()
         self.publish = args['publish']
@@ -97,21 +103,17 @@ class Uploader():
         built_charm_repo = BUILT_CHARM_REPOS.get(self.publish)
         if not built_charm_repo:
             return
+        weebl_dir = os.path.join(self.working_dir, "builds/weebl/")
         built_dir = os.path.join(self.working_dir, "builds/weebl-built/")
         self.cmd('bzr checkout {} {}'.format(built_charm_repo, built_dir))
-        self.cmd('cp -R builds/weebl-built/.bzr builds/weebl/')
-        self.cmd('rm -fr builds/weebl-built/builds')
+        shutil.copytree('builds/weebl-built/.bzr', weebl_dir)
+        shutil.rmtree(os.path.join(built_dir, "builds"))
         log = self.cmd('bzr log -r-1 --line')
-        os.chdir(os.path.join(self.working_dir, 'builds/weebl'))
+        os.chdir(weebl_dir)
         self.cmd('bzr add')
         # This repo has a post-commit hook that automatically pushes to trunk:
         self.cmd('bzr commit -m "{}"'.format(log))
 
-
-    def parse_args(self):
-        parser = argparse.ArgumentParser()
-        parser.add_argument('publish', nargs='?', default=False)
-        return vars(parser.parse_args())
 
 def main():
     Uploader().main()
