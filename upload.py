@@ -110,9 +110,7 @@ class Uploader():
         return vars(parser.parse_args())
 
 def main():
-    output = Uploader().main()
-    if output:
-        pprint(output)
+    Uploader().main()
 
 
 if __name__ == "__main__":
