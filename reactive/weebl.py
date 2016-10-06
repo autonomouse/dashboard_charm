@@ -142,11 +142,24 @@ def install_npm_deps():
     return weebl_ready
 
 
+def install_pip_deps():
+    install_cmd = 'pip3 install -U --no-index -f wheelhouse WeasyPrint'
+    try:
+        check_call(shlex.split(install_cmd))
+    except CalledProcessError:
+        return False
+    return True
+
+
+def install_deps():
+    return install_npm_deps() and install_pip_deps()
+
+
 @when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
     weebl_ready = False
     if install_weebl_deb():
-        weebl_ready = install_npm_deps()
+        weebl_ready = install_deps()
     setup_weebl_gunicorn_service()
     cmd_service('start', 'weebl-gunicorn')
     cmd_service('restart', 'nginx')
