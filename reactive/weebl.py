@@ -143,7 +143,7 @@ def install_npm_deps():
 
 
 def install_pip_deps():
-    install_cmd = 'pip3 install -U --no-index -f wheelhouse WeasyPrint'
+    install_cmd = 'pip3 install -U --no-index -f wheels -r wheels/wheels.txt'
     try:
         check_call(shlex.split(install_cmd))
     except CalledProcessError:
