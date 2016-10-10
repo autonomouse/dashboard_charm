@@ -103,7 +103,7 @@ def install_weebl(*args, **kwargs):
     utils.fix_bundle_dir_permissions()
     if not weebl_ready:
         raise Exception('Weebl installation failed')
-    return True
+    return weebl_ready
 
 
 def render_config(pgsql):
