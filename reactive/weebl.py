@@ -94,6 +94,8 @@ def install_weebl(*args, **kwargs):
     weebl_ready = False
     if utils.install_deb(WEEBL_PKG, config, hookenv):
         weebl_ready = utils.install_npm_deps(hookenv)
+    else:
+        return False
     setup_weebl_gunicorn_service()
     utils.cmd_service('start', 'weebl-gunicorn', hookenv)
     utils.cmd_service('restart', 'nginx', hookenv)
@@ -101,8 +103,8 @@ def install_weebl(*args, **kwargs):
     setup_weebl_site(config['username'])
     utils.fix_bundle_dir_permissions()
     if not weebl_ready:
-        hookenv.status_set('maintenance', 'Weebl installation failed')
         raise Exception('Weebl installation failed')
+    return True
 
 
 def render_config(pgsql):
@@ -128,5 +130,7 @@ def setup_database(pgsql):
         hookenv.log('Configuring weebl db!')
         hookenv.status_set('maintenance', 'weebl is connecting to pgsql!')
         render_config(pgsql)
-        install_weebl()
-        hookenv.status_set('active', 'Ready')
+        if install_weebl():
+            hookenv.status_set('active', 'Ready')
+        else:
+            hookenv.status_set('maintenance', 'Weebl installation failed')
