@@ -62,12 +62,15 @@ def create_default_user(username, email, uid, apikey):
 
 @when('oildashboard.connected', 'database.master.available', 'nginx.available')
 def set_default_credentials_and_send_to_weebl(oildashboard, *args, **kwargs):
+    if '_apikey' in config:
+        return
     apikey = utils.get_or_generate_apikey(config['apikey'])
     create_default_user(
         config['username'], config['email'], config['uid'], apikey)
     oildashboard.provide_weebl_credentials(
         weebl_username=config['username'],
         weebl_apikey=apikey)
+    config['_apikey'] = apikey
 
 
 def load_fixtures():
@@ -84,8 +87,10 @@ def migrate_db():
     check_call(shlex.split(command))
 
 
-@when('database.master.available', 'nginx.available', 'config.changed')
+@when('database.master.available', 'nginx.available')
+@when('config.changed')
 def install_weebl(*args, **kwargs):
+    hookenv.status_set('maintenance', 'Installing Weebl...')
     weebl_ready = False
     if utils.install_deb(WEEBL_PKG, config, hookenv):
         weebl_ready = utils.install_npm_deps(hookenv)
