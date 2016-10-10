@@ -9,9 +9,6 @@ import subprocess
 
 
 CHARMSTORE_LOC = "cs:~oil-charms/weebl"
-BUILT_CHARM_REPOS = {
-    'stable': "lp:~oil-ci/oil-ci/charm-weebl-BUILT",
-    'edge': 'lp:~autonomouse/oil-ci/charm-weebl-edge-BUILT', }
 
 
 class Uploader():
@@ -78,7 +75,6 @@ class Uploader():
     def process_charm(self):
         self.build_charm()
         self.publish_charm()
-        self.update_built_charm()
 
 
     def build_charm(self):
@@ -98,26 +94,6 @@ class Uploader():
             self.charm, self.publish))
         self.channel = output.split(' ')[2]
         print("This charm has been published to {}.".format(self.channel))
-
-
-    def update_built_charm(self):
-        built_charm_repo = BUILT_CHARM_REPOS.get(self.publish)
-        if not built_charm_repo:
-            return
-        existing_built_weebl = os.path.join(self.working_dir, "builds/weebl-built/")
-        new_built_weebl = os.path.join(self.working_dir, "builds/weebl/")
-        self.cmd('bzr checkout {} {}'.format(built_charm_repo, existing_built_weebl))
-        shutil.copytree(
-            os.path.join(existing_built_weebl, '.bzr'),
-            os.path.join(new_built_weebl, '.bzr'))
-        shutil.rmtree(existing_built_weebl)
-        log = self.cmd('bzr log -r-1 --line')
-        os.chdir(new_built_weebl)
-        self.cmd('bzr add')
-        # This repo has a post-commit hook that automatically pushes to trunk:
-        self.cmd('bzr commit -m "{}"'.format(log))
-        print("The built version of this charm has been pushed to {}.".format(
-            built_charm_repo))
 
 
 def main():
