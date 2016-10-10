@@ -87,8 +87,7 @@ def migrate_db():
     check_call(shlex.split(command))
 
 
-@when('database.master.available', 'nginx.available')
-@when('config.changed')
+@when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
     hookenv.status_set('maintenance', 'Installing Weebl...')
     weebl_ready = False
