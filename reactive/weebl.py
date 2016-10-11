@@ -63,6 +63,7 @@ def create_default_user(username, email, uid, apikey):
 @when('oildashboard.connected', 'database.master.available', 'nginx.available')
 def set_default_credentials_and_send_to_weebl(oildashboard, *args, **kwargs):
     if '_apikey' in config:
+        hookenv.log('Apikey already set')
         return
     apikey = utils.get_or_generate_apikey(config['apikey'])
     create_default_user(
