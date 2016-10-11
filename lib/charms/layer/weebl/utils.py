@@ -54,7 +54,7 @@ def fix_bundle_dir_permissions():
 
 
 def get_or_generate_apikey(apikey):
-    if apikey not in [None, ""]:
+    if apikey not in [None, "", "None"]:
         return apikey
     else:
         hookenv.log("No apikey provided - generating random apikey.")
