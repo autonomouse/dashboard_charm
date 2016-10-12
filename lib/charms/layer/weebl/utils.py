@@ -53,11 +53,12 @@ def fix_bundle_dir_permissions():
     check_call(shlex.split(chown_cmd))
 
 
-def get_or_generate_apikey(apikey):
+def get_or_generate_apikey(apikey, hookenv=None):
     if apikey not in [None, "", "None"]:
         return apikey
     else:
-        hookenv.log("No apikey provided - generating random apikey.")
+        if hookenv:
+            hookenv.log("No apikey provided - generating random apikey.")
         return ''.join([choice(hexdigits[:16]) for _ in range(40)])
 
 
