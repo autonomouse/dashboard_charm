@@ -8,6 +8,7 @@ from charmhelpers.fetch import (
     apt_update,
     apt_install,
     )
+from random import choice
 from string import hexdigits
 from subprocess import check_call, CalledProcessError
 from charms.layer.weebl.constants import JSLIBS_DIR, NPM_PKGS
@@ -55,6 +56,8 @@ def fix_bundle_dir_permissions():
 
 def get_or_generate_apikey(apikey, hookenv=None):
     if apikey not in [None, "", "None"]:
+        if hookenv:
+            hookenv.log("Using apikey already provided.")
         return apikey
     else:
         if hookenv:
