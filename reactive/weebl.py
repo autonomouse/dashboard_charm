@@ -99,11 +99,11 @@ def install_weebl(*args, **kwargs):
     setup_weebl_gunicorn_service()
     utils.cmd_service('start', 'weebl-gunicorn', hookenv)
     utils.cmd_service('restart', 'nginx', hookenv)
-    load_fixtures()
     setup_weebl_site(config['username'])
     utils.fix_bundle_dir_permissions()
     if not weebl_ready:
         raise Exception('Weebl installation failed')
+    load_fixtures()
     return weebl_ready
 
 
