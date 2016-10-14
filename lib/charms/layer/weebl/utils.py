@@ -45,7 +45,7 @@ def install_deb(pkg, config, hookenv=None):
     except Exception as e:
         if hookenv:
             hookenv.log(str(e))
-        return False
+        raise Exception('Installation of Weebl deb failed')
     return True
 
 
@@ -80,4 +80,5 @@ def install_npm_deps(hookenv=None):
             if hookenv:
                 hookenv.log(err_msg)
             weebl_ready = False
+            raise Exception("Installation of Weebl's NPM dependencies failed")
         return weebl_ready
