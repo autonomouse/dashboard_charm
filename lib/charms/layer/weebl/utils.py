@@ -10,7 +10,7 @@ from charmhelpers.fetch import (
     )
 from random import choice
 from string import hexdigits
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call, check_output, CalledProcessError
 from charms.layer.weebl.constants import JSLIBS_DIR, NPM_PKGS
 
 
@@ -41,11 +41,17 @@ def install_deb(pkg, config, hookenv=None):
             hookenv.log("Unable to add source PPA: {}".format(ppa))
     try:
         apt_update()
+    except Exception as e:
+        if hookenv:
+            hookenv.log(str(e))
+    try:
         apt_install([pkg])
     except Exception as e:
         if hookenv:
             hookenv.log(str(e))
-        raise Exception('Installation of Weebl deb failed')
+        return False
+    if hookenv:
+        hookenv.log("{} installed!".format(pkg))
     return True
 
 
@@ -81,4 +87,7 @@ def install_npm_deps(hookenv=None):
                 hookenv.log(err_msg)
             weebl_ready = False
             raise Exception("Installation of Weebl's NPM dependencies failed")
-        return weebl_ready
+        msg = "Installed {} via npm".format(npm_pkg)
+        if hookenv:
+            hookenv.log(msg)
+    return weebl_ready
