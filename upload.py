@@ -26,7 +26,9 @@ class Uploader():
 
     def parse_args(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('publish', default=False)
+        parser.add_argument('publish', default=False,
+                            help='Publish as stable, candidate, beta, or edge.'
+                            ' e.g.: "./upload.py stable"')
         return vars(parser.parse_args())
 
 
