@@ -74,6 +74,7 @@ def set_default_credentials_and_send_to_weebl(oildashboard, *args, **kwargs):
         weebl_username=config['username'],
         weebl_apikey=apikey)
     config['_apikey'] = apikey
+    config['apikey'] = config['_apikey']
 
 
 def load_fixtures():
