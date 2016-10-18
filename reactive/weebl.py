@@ -100,7 +100,6 @@ def install_weebl(*args, **kwargs):
     pip_pkgs_installed = utils.install_pip_deps(hookenv)
     if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
         weebl_ready = True
-    load_fixtures()
     setup_weebl_gunicorn_service()
     utils.cmd_service('start', 'weebl-gunicorn', hookenv)
     utils.cmd_service('restart', 'nginx', hookenv)
@@ -108,6 +107,7 @@ def install_weebl(*args, **kwargs):
     utils.fix_bundle_dir_permissions()
     if not weebl_ready:
         raise Exception('Weebl installation failed')
+    load_fixtures()
     return weebl_ready
 
 
