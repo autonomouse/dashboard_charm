@@ -91,15 +91,6 @@ def migrate_db():
     check_call(shlex.split(command))
 
 
-'''@when('config.changed')
-def check_admin_pass():
-    admin_pass = hookenv.config()['admin-pass']
-    if admin_pass:
-        set_state('admin-pass')
-    else:
-        remove_state('admin-pass')'''
-
-
 @when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
     hookenv.status_set('maintenance', 'Installing Weebl...')
@@ -107,13 +98,12 @@ def install_weebl(*args, **kwargs):
     deb_pkg_installed = utils.install_deb(WEEBL_PKG, config, hookenv)
     npm_pkgs_installed = utils.install_npm_deps(hookenv)
     pip_pkgs_installed = utils.install_pip_deps(hookenv)
-    if deb_installed and npm_pkgs_installed and pip_pkgs_installed:
+    if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
         weebl_ready = True
     load_fixtures()
     setup_weebl_gunicorn_service()
     utils.cmd_service('start', 'weebl-gunicorn', hookenv)
     utils.cmd_service('restart', 'nginx', hookenv)
-    load_fixtures()
     setup_weebl_site(config['username'])
     utils.fix_bundle_dir_permissions()
     if not weebl_ready:
