@@ -91,24 +91,13 @@ def migrate_db():
     check_call(shlex.split(command))
 
 
-def install_npm_deps():
-    weebl_ready = True
-    hookenv.log('Installing npm packages...')
-    mkdir_p(JSLIBS_DIR)
-    npm_pkgs = [
-        "d3@3.5.17",
-        "nvd3@1.8.3",
-        "angular-nvd3@1.0.7"]
-    for npm_pkg in npm_pkgs:
-        command = "npm install --prefix {} {}".format(
-            JSLIBS_DIR, npm_pkg)
-        try:
-            check_call(shlex.split(command))
-        except CalledProcessError:
-            err_msg = "Failed to install {} via npm".format(npm_pkg)
-            hookenv.log(err_msg)
-            weebl_ready = False
-    return weebl_ready
+'''@when('config.changed')
+def check_admin_pass():
+    admin_pass = hookenv.config()['admin-pass']
+    if admin_pass:
+        set_state('admin-pass')
+    else:
+        remove_state('admin-pass')'''
 
 
 @when('database.master.available', 'nginx.available', 'config.changed')
@@ -124,6 +113,7 @@ def install_weebl(*args, **kwargs):
     setup_weebl_gunicorn_service()
     utils.cmd_service('start', 'weebl-gunicorn', hookenv)
     utils.cmd_service('restart', 'nginx', hookenv)
+    load_fixtures()
     setup_weebl_site(config['username'])
     utils.fix_bundle_dir_permissions()
     if not weebl_ready:
