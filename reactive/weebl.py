@@ -29,7 +29,7 @@ def setup_weebl_gunicorn_service():
         source="weebl-gunicorn.service",
         target="/lib/systemd/system/weebl-gunicorn.service",
         context={'extra_options': config['extra_options']})
-    utils.cmd_service('enable', 'weebl-gunicorn', hookenv)
+    utils.cmd_service('enable', 'weebl-gunicorn')
 
 
 def setup_weebl_site(weebl_name):
@@ -59,22 +59,29 @@ def create_default_user(username, email, uid, apikey):
         raise Exception(err_msg)
 
 
-@when('oildashboard.connected', 'database.master.available', 'nginx.available')
-def set_default_credentials_and_send_to_weebl(oildashboard, *args, **kwargs):
-    if '_apikey' in config and (config['apikey'] == config['_apikey']):
+@when('database.master.available', 'nginx.available')
+def set_default_credentials(*args, **kwargs):
+    if '_apikey' in config:
         hookenv.log('Apikey already set')
         return
     hookenv.log('Setting apikey')
-    apikey = utils.get_or_generate_apikey(config.get('apikey'), hookenv)
+    apikey = utils.get_or_generate_apikey(config.get('apikey'))
     if 'uid' not in config and 'email' in config:
         config['uid'] = config['email'].split('@')[0]
     create_default_user(
         config['username'], config['email'], config['uid'], apikey)
+    config['_apikey'] = apikey
+
+
+@when('oildashboard.connected', 'config.changed)
+def send_default_credentials_to_weebl(oildashboard):
+    if '_apikey' not in config:
+        hookenv.log('Apikey not set')
+        return
+    hookenv.log('Passing weebl username and apikey to oildashboard relation')
     oildashboard.provide_weebl_credentials(
         weebl_username=config['username'],
-        weebl_apikey=apikey)
-    config['_apikey'] = apikey
-    config['apikey'] = config['_apikey']
+        weebl_apikey=config['_apikey'])
 
 
 def load_fixtures():
@@ -95,14 +102,14 @@ def migrate_db():
 def install_weebl(*args, **kwargs):
     hookenv.status_set('maintenance', 'Installing Weebl...')
     weebl_ready = False
-    deb_pkg_installed = utils.install_deb(WEEBL_PKG, config, hookenv)
-    npm_pkgs_installed = utils.install_npm_deps(hookenv)
-    pip_pkgs_installed = utils.install_pip_deps(hookenv)
+    deb_pkg_installed = utils.install_deb(WEEBL_PKG, config)
+    npm_pkgs_installed = utils.install_npm_deps()
+    pip_pkgs_installed = utils.install_pip_deps()
     if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
         weebl_ready = True
     setup_weebl_gunicorn_service()
-    utils.cmd_service('start', 'weebl-gunicorn', hookenv)
-    utils.cmd_service('restart', 'nginx', hookenv)
+    utils.cmd_service('start', 'weebl-gunicorn')
+    utils.cmd_service('restart', 'nginx')
     setup_weebl_site(config['username'])
     utils.fix_bundle_dir_permissions()
     if not weebl_ready:
