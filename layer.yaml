@@ -3,10 +3,10 @@ includes:
   - 'layer:apt'
   - 'layer:nginx'
   - 'interface:pgsql'
+  - 'interface:weebl'
 options:
   apt:
     packages:
       - libcairo2
       - libpango1.0-0
-
 repo: "bzr+ssh://bazaar.launchpad.net/~oil-ci/oil-ci/charm-weebl/"
