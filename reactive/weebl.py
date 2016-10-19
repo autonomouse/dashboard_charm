@@ -59,7 +59,7 @@ def create_default_user(username, email, uid, apikey):
         raise Exception(err_msg)
 
 
-@when('database.master.available', 'nginx.available')
+@when('database.master.available', 'nginx.available', 'weebl.ready')
 def set_default_credentials(*args, **kwargs):
     if '_apikey' in config:
         hookenv.log('Apikey already set')
@@ -71,9 +71,10 @@ def set_default_credentials(*args, **kwargs):
     create_default_user(
         config['username'], config['email'], config['uid'], apikey)
     config['_apikey'] = apikey
+    set_state('credentials.available')
 
 
-@when('oildashboard.connected', 'config.changed')
+@when('oildashboard.connected', 'credentials.available')
 def send_default_credentials_to_weebl(oildashboard):
     if '_apikey' not in config:
         hookenv.log('Apikey not set')
@@ -143,5 +144,6 @@ def setup_database(pgsql):
         render_config(pgsql)
         if install_weebl():
             hookenv.status_set('active', 'Ready')
+            set_state('weebl.ready')
         else:
             hookenv.status_set('maintenance', 'Weebl installation failed')
