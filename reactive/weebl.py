@@ -76,9 +76,6 @@ def set_default_credentials(*args, **kwargs):
 
 @when('oildashboard.connected', 'credentials.available')
 def send_default_credentials_to_weebl(oildashboard):
-    if '_apikey' not in config:
-        hookenv.log('Apikey not set')
-        return
     hookenv.log('Passing weebl username and apikey to oildashboard relation')
     oildashboard.provide_weebl_credentials(
         weebl_username=config['username'],
