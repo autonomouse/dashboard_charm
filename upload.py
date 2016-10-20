@@ -98,7 +98,7 @@ class Uploader():
         self.cmd('charm grant {} --channel {} everyone'.format(
             self.charm, self.publish))
         print("This charm has been published to {}.".format(self.channel))
-        
+
 
 def main():
     Uploader().main()
