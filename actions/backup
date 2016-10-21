@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+WEEBL_DB_INFO=$(cat /etc/weebl/weebl.yaml)
+PASSWORD=`echo $WEEBL_DB_INFO | cut -d : -f 5 | cut -d , -f 1 | tr -d '[[:space:]]'`
+HOST=`echo $WEEBL_DB_INFO | cut -d : -f 4 | cut -d , -f 1 | tr -d '[[:space:]]'`
+USER=`echo $WEEBL_DB_INFO | cut -d : -f 7 | cut -d } -f 1 | tr -d '[[:space:]]'`
+PORT=`echo $WEEBL_DB_INFO | cut -d : -f 6 | cut -d , -f 1 | tr -d "'" | tr -d '[[:space:]]'`
+DATABASE=`echo $WEEBL_DB_INFO | cut -d : -f 3 | cut -d , -f 1 | tr -d '[[:space:]]'`
+OUTPUT=`echo weebl_db_backup_$HOSTNAME _$(date +%F_%H-%M-%S) | tr -d '[[:space:]]'`
+
+PGPASSWORD=$PASSWORD pg_dump -h $HOST -U $USER -p $PORT -x -F t $DATABASE  > $OUTPUT
+
+WEEBL_IP=`echo $SSH_CONNECTION | cut -d ' ' -f 3`
+JUJU_IP=`echo $SSH_CONNECTION | cut -d ' ' -f 1`
+
+echo "Database dumped to $WEEBL_IP:$OUTPUT"
+
+# TODO: scp $OUTPUT to $JUJU_IP
