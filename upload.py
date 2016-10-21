@@ -26,15 +26,15 @@ class Uploader():
 
     def parse_args(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('publish', default=False, nargs='?',
-                            help='Publish as stable, candidate, beta, or edge.'
+        parser.add_argument('release', default=False, nargs='?',
+                            help='Release as stable, candidate, beta, or edge.'
                             ' e.g.: "./upload.py stable"')
         return vars(parser.parse_args())
 
 
     def get_args(self):
         args = self.parse_args()
-        self.publish = args['publish']
+        self.release = args['release']
 
 
     def exit_if_repo_not_clean(self):
@@ -76,7 +76,7 @@ class Uploader():
 
     def process_charm(self):
         self.build_charm()
-        self.publish_charm()
+        self.release_charm()
 
 
     def build_charm(self):
@@ -88,16 +88,16 @@ class Uploader():
             self.charm, build_dir))
 
 
-    def publish_charm(self):
-        if not self.publish:
-            print("This charm has not been published.")
+    def release_charm(self):
+        if not self.release:
+            print("This charm has not been released.")
             return
-        output = self.cmd('charm publish {} --channel {}'.format(
-            self.charm, self.publish))
+        output = self.cmd('charm release {} --channel {}'.format(
+            self.charm, self.release))
         self.channel = output.split(' ')[2]
         self.cmd('charm grant {} --channel {} everyone'.format(
-            self.charm, self.publish))
-        print("This charm has been published to {}.".format(self.channel))
+            self.charm, self.release))
+        print("This charm has been released to {}.".format(self.channel))
 
 
 def main():
