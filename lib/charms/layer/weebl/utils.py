@@ -64,28 +64,12 @@ def get_or_generate_apikey(apikey):
         return ''.join([choice(hexdigits[:16]) for _ in range(40)])
 
 
-def install_npm_deps(config):
+def install_npm_deps():
     weebl_ready = True
     hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
-    http_proxy = config['http_proxy']
-    https_proxy = config['https_proxy']
-    try:
-        if http_proxy is not '':
-            command = "npm config set proxy {}".format(
-                http_proxy)
-            check_call(shlex.split(command))
-        if https_proxy is not '':
-            command = "npm config set https-proxy {}".format(
-                https_proxy)
-            check_call(shlex.split(command))
-    except CalledProcessError:
-        err_msg = "Setup of Weebl's NPM proxy failed"
-        hookenv.log(err_msg)
-        weebl_ready = False
-        raise Exception("Setup of Weebl's NPM proxy failed")
     for npm_pkg in NPM_PKGS:
-        command = "npm install --prefix {} {}".format(
+        command = "npm install --prefix {} ./npms/{}.tgz".format(
             JSLIBS_DIR, npm_pkg)
         try:
             check_call(shlex.split(command))
