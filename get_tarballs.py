@@ -47,7 +47,7 @@ print("The following python wheels are now available in {}:\n".format(
 print("\n".join(sorted(os.listdir(pip_path), key=lambda s: s.lower())))
 print("\n")
 
-# Update pip
+# Update npm
 npm_path = os.path.abspath(constants.NPMDIR)
 if not os.path.exists(npm_path):
     os.mkdir(npm_path)
