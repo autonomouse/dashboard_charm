@@ -19,6 +19,7 @@ try:
     cache.open()
 except LockFailedException:
     print("\nPlease run again as sudo\n")
+    sys.exit()
 
 for pkg_name in constants.DEB_PKGS:
     pkg = cache[pkg_name]
@@ -36,7 +37,7 @@ if not os.path.exists(pip_path):
 try:
     os.chdir(pip_path)
     for pip_pkg in constants.PIP_PKGS:
-        check_output("pip wheel {}".format(pip_pkg), shell=True)
+        check_output("pip3 wheel {}".format(pip_pkg), shell=True)
 finally:
     os.chdir(original_wd)
     check_call("sudo chown -R {}:{} {}".format(
