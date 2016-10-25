@@ -101,7 +101,7 @@ def install_weebl(*args, **kwargs):
     hookenv.status_set('maintenance', 'Installing Weebl...')
     weebl_ready = False
     deb_pkg_installed = utils.install_deb(WEEBL_PKG, config)
-    npm_pkgs_installed = utils.install_npm_deps(config)
+    npm_pkgs_installed = utils.install_npm_deps()
     pip_pkgs_installed = utils.install_pip_deps()
     if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
         weebl_ready = True
