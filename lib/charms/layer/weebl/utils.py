@@ -70,7 +70,7 @@ def install_npm_deps():
     mkdir_p(JSLIBS_DIR)
     for npm_pkg in NPM_PKGS:
         command = "npm install --prefix {} ./npms/{}.tgz".format(
-            JSLIBS_DIR, npm_pkg)
+            JSLIBS_DIR, npm_pkg.replace('@', '-'))
         try:
             check_call(shlex.split(command))
         except CalledProcessError:
