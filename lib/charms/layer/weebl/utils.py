@@ -8,7 +8,6 @@ from charmhelpers.fetch import (
     apt_update,
     apt_install,
     )
-from glob import glob
 from random import choice
 from string import hexdigits
 from charmhelpers.core import hookenv
@@ -90,8 +89,9 @@ def install_pip_deps():
     install_cmd = "pip3 install -U --no-index -f {} {}".format(
         constants.PIPDIR, wheel)
     failed = False
-    for wheel in glob(os.path.join('{}/*'.format(constants.PIPDIR))):
-        install_cmd = "pip3 install -U --no-index -f {} {}".format(constants.PIPDIR, wheel)
+    for wheel in constants.PIP_PKGS:
+        install_cmd = "pip3 install -U --no-index -f {} {}".format(
+            constants.PIPDIR, wheel)
         try:
             check_call(shlex.split(install_cmd))
         except CalledProcessError:
