@@ -9,7 +9,7 @@ from lib.charms.layer.weebl import constants
 from subprocess import check_output, check_call
 
 
-def install_debs(requires_installation):
+def install_debs(requires_installation, cache):
     try:
         cache.update()
         cache.open()
@@ -30,7 +30,7 @@ def update_debs_if_necessary():
         if not pkg.is_installed:
             requires_installation.append(pkg)
     if requires_installation:
-        install_debs(requires_installation)
+        install_debs(requires_installation, cache)
 
 
 def chown(path):
