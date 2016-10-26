@@ -8,57 +8,51 @@ from lib.charms.layer.weebl import constants
 from subprocess import check_output, check_call
 
 
-original_wd = os.getcwd()
-cache = apt.cache.Cache()
-sudo_id = os.environ.get('SUDO_ID', 1000)
-sudo_gid = os.environ.get('SUDO_GID', 1000)
+def update_debs():
+    cache = apt.cache.Cache()
+    try:
+        cache.update()
+        cache.open()
+    except LockFailedException:
+        sys.exit("\nPlease run again as sudo\n")
 
-# Update debs
-try:
-    cache.update()
-    cache.open()
-except LockFailedException:
-    print("\nPlease run again as sudo\n")
-    sys.exit()
+    for pkg_name in constants.DEB_PKGS:
+        pkg = cache[pkg_name]
+        if not pkg.is_installed:
+            pkg.mark_install()
+            cache.commit()
 
-for pkg_name in constants.DEB_PKGS:
-    pkg = cache[pkg_name]
-    if pkg.is_installed:
-        print("{pkg_name} already installed".format(pkg_name=pkg_name))
-    else:
-        pkg.mark_install()
-        cache.commit()
-print("\n")
 
-# Update pip
-pip_path = os.path.abspath(constants.PIPDIR)
-if not os.path.exists(pip_path):
-    os.mkdir(pip_path)
-try:
-    os.chdir(pip_path)
-    for pip_pkg in constants.PIP_PKGS:
-        check_output("pip3 wheel {}".format(pip_pkg), shell=True)
-finally:
-    os.chdir(original_wd)
-    check_call("sudo chown -R {}:{} {}".format(
-        sudo_id, sudo_gid, pip_path), shell=True)
-print("The following python wheels are now available in {}:\n".format(
-    pip_path))
-print("\n".join(sorted(os.listdir(pip_path), key=lambda s: s.lower())))
-print("\n")
+def custom_update(directory, pks, cmd):
+    path = os.path.abspath(directory)
+    if not os.path.exists(path):
+        os.mkdir(path)
+    try:
+        os.chdir(path)
+        for pkg in pkgs:
+            check_output(cmd.format(pkg), shell=True)
+    finally:
+        os.chdir(original_wd)
+        check_call("sudo chown -R {}:{} {}".format(
+            sudo_id, sudo_gid, path), shell=True)
 
-# Update npm
-npm_path = os.path.abspath(constants.NPMDIR)
-if not os.path.exists(npm_path):
-    os.mkdir(npm_path)
-try:
-    os.chdir(npm_path)
-    for npm_pkg in constants.NPM_PKGS:
-        check_output("sudo npm pack {}".format(npm_pkg), shell=True)
-finally:
-    os.chdir(original_wd)
-    check_call("sudo chown -R {}:{} {}".format(
-        sudo_id, sudo_gid, npm_path), shell=True)
-print("The following npm pkgs are now available in {}:\n".format(npm_path))
-print("\n".join(sorted(os.listdir(npm_path), key=lambda s: s.lower())))
-print("\n")
+
+def update_pip():
+    custom_update(constants.PIPDIR, constants.PIP_PKGS, "pip3 wheel {}")
+
+
+def update_npm():
+    custom_update(constants.NPMDIR, constants.NPM_PKGS, "sudo npm pack {}")
+
+
+def main():
+    original_wd = os.getcwd()
+    sudo_id = os.environ.get('SUDO_ID', 1000)
+    sudo_gid = os.environ.get('SUDO_GID', 1000)
+    update_debs()
+    update_pip(sudo_id, sudo_gid)
+    update_npm(sudo_id, sudo_gid)
+
+
+if __name__ == '__main__':
+    main()
