@@ -24,6 +24,8 @@ def update_debs():
 
 
 def custom_update(directory, pks, cmd):
+    sudo_id = os.environ.get('SUDO_ID', 1000)
+    sudo_gid = os.environ.get('SUDO_GID', 1000)
     path = os.path.abspath(directory)
     if not os.path.exists(path):
         os.mkdir(path)
@@ -47,11 +49,9 @@ def update_npm():
 
 def main():
     original_wd = os.getcwd()
-    sudo_id = os.environ.get('SUDO_ID', 1000)
-    sudo_gid = os.environ.get('SUDO_GID', 1000)
     update_debs()
-    update_pip(sudo_id, sudo_gid)
-    update_npm(sudo_id, sudo_gid)
+    update_pip()
+    update_npm()
 
 
 if __name__ == '__main__':
