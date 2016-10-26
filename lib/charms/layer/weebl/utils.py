@@ -12,7 +12,7 @@ from random import choice
 from string import hexdigits
 from charmhelpers.core import hookenv
 from subprocess import check_call, check_output, CalledProcessError
-from charms.layer.weebl.constants import JSLIBS_DIR, NPM_PKGS
+from charms.layer.weebl import constants
 
 
 def mkdir_p(directory_name):
@@ -51,7 +51,7 @@ def install_deb(pkg, config):
 
 
 def fix_bundle_dir_permissions():
-    chown_cmd = "chown www-data {}/img/bundles/".format(JSLIBS_DIR)
+    chown_cmd = "chown www-data {}/img/bundles/".format(constants.JSLIBS_DIR)
     check_call(shlex.split(chown_cmd))
 
 
@@ -64,29 +64,14 @@ def get_or_generate_apikey(apikey):
         return ''.join([choice(hexdigits[:16]) for _ in range(40)])
 
 
-def install_npm_deps(config):
+def install_npm_deps():
     weebl_ready = True
     hookenv.log('Installing npm packages...')
-    mkdir_p(JSLIBS_DIR)
-    http_proxy = config['http_proxy']
-    https_proxy = config['https_proxy']
-    try:
-        if http_proxy is not '':
-            command = "npm config set proxy {}".format(
-                http_proxy)
-            check_call(shlex.split(command))
-        if https_proxy is not '':
-            command = "npm config set https-proxy {}".format(
-                https_proxy)
-            check_call(shlex.split(command))
-    except CalledProcessError:
-        err_msg = "Setup of Weebl's NPM proxy failed"
-        hookenv.log(err_msg)
-        weebl_ready = False
-        raise Exception("Setup of Weebl's NPM proxy failed")
-    for npm_pkg in NPM_PKGS:
-        command = "npm install --prefix {} {}".format(
-            JSLIBS_DIR, npm_pkg)
+    mkdir_p(constants.JSLIBS_DIR)
+    for npm_pkg in constants.NPM_PKGS:
+        pkg_path = os.path.join(constants.NPMDIR, npm_pkg.replace('@', '-')
+        command = "npm install --prefix {} {}.tgz".format(
+            constants.JSLIBS_DIR, pkg_path)
         try:
             check_call(shlex.split(command))
         except CalledProcessError:
@@ -101,7 +86,8 @@ def install_npm_deps(config):
 
 def install_pip_deps():
     hookenv.log('Installing pip packages...')
-    install_cmd = 'pip3 install -U --no-index -f wheels -r wheels/wheels.txt'
+    install_cmd = 'pip3 install -U --no-index -f {} {}'.format(
+        constants.PIPDIR, ' '.join(constants.PIP_PKGS))
     try:
         check_call(shlex.split(install_cmd))
     except CalledProcessError:

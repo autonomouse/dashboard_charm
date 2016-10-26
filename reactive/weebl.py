@@ -101,7 +101,7 @@ def install_weebl(*args, **kwargs):
     hookenv.status_set('maintenance', 'Installing Weebl...')
     weebl_ready = False
     deb_pkg_installed = utils.install_deb(WEEBL_PKG, config)
-    npm_pkgs_installed = utils.install_npm_deps(config)
+    npm_pkgs_installed = utils.install_npm_deps()
     pip_pkgs_installed = utils.install_pip_deps()
     if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
         weebl_ready = True
@@ -111,7 +111,10 @@ def install_weebl(*args, **kwargs):
     setup_weebl_site(config['username'])
     utils.fix_bundle_dir_permissions()
     if not weebl_ready:
-        raise Exception('Weebl installation failed')
+        msg = ('Weebl installation failed: deb pkgs installed: {}, '
+               'npm pkgs installed: {}, pip pkgs installed: {}')
+        raise Exception(msg.format(
+            deb_pkg_installed, npm_pkgs_installed, pip_pkgs_installed))
     load_fixtures()
     return weebl_ready
 
