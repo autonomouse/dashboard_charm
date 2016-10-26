@@ -40,7 +40,7 @@ def custom_update(directory, pkgs, cmd):
             check_output(cmd.format(pkg), shell=True)
     finally:
         os.chdir(original_wd)
-        check_call("sudo chown -R {}:{} {}".format(
+        check_call("chown -R {}:{} {}".format(
             sudo_id, sudo_gid, path), shell=True)
 
 
@@ -49,7 +49,7 @@ def update_pip():
 
 
 def update_npm():
-    custom_update(constants.NPMDIR, constants.NPM_PKGS, "sudo npm pack {}")
+    custom_update(constants.NPMDIR, constants.NPM_PKGS, "npm pack {}")
 
 
 def main():
