@@ -1,18 +1,21 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
-WEEBL_DB_INFO=$(cat /etc/weebl/weebl.yaml)
-PASSWORD=`echo $WEEBL_DB_INFO | cut -d : -f 5 | cut -d , -f 1 | tr -d '[[:space:]]'`
-HOST=`echo $WEEBL_DB_INFO | cut -d : -f 4 | cut -d , -f 1 | tr -d '[[:space:]]'`
-USER=`echo $WEEBL_DB_INFO | cut -d : -f 7 | cut -d } -f 1 | tr -d '[[:space:]]'`
-PORT=`echo $WEEBL_DB_INFO | cut -d : -f 6 | cut -d , -f 1 | tr -d "'" | tr -d '[[:space:]]'`
-DATABASE=`echo $WEEBL_DB_INFO | cut -d : -f 3 | cut -d , -f 1 | tr -d '[[:space:]]'`
-OUTPUT=`echo weebl_db_backup_$HOSTNAME _$(date +%F_%H-%M-%S) | tr -d '[[:space:]]'`
+import os
+import yaml
+import shlex
+import socket
+from datetime import datetime
+from subprocess import check_output
 
-PGPASSWORD=$PASSWORD pg_dump -h $HOST -U $USER -p $PORT -x -F t $DATABASE  > $OUTPUT
 
-WEEBL_IP=`echo $SSH_CONNECTION | cut -d ' ' -f 3`
-JUJU_IP=`echo $SSH_CONNECTION | cut -d ' ' -f 1`
-
-echo "Database dumped to $WEEBL_IP:$OUTPUT"
+with open("/etc/weebl/weebl.yaml") as f:
+    weebl_data = yaml.load(f.read())
+now = datetime.now().strftime("%F_%H-%M-%S")
+out = "weebl_db_backup_{}_{}".format(socket.gethostname(), now)
+cmd = ("PGPASSWORD={password} pg_dump -h {host} -U {user} -p {port} -x -F "
+       "t {database} > {output}".format(**weebl_data['database'], output=out))
+check_output(shlex.split(cmd))
+juju_ip, _, weebl_ip, __ = os.environ['SSH_CONNECTION'].split(' ')
+print("Database dumped to '{}' on {}".format(output, weebl_ip))
 
 # TODO: scp $OUTPUT to $JUJU_IP
