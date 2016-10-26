@@ -8,11 +8,12 @@ from charmhelpers.fetch import (
     apt_update,
     apt_install,
     )
+from glob import glob
 from random import choice
 from string import hexdigits
 from charmhelpers.core import hookenv
 from subprocess import check_call, check_output, CalledProcessError
-from charms.layer.weebl.constants import JSLIBS_DIR, NPM_PKGS
+from charms.layer.weebl import constants
 
 
 def mkdir_p(directory_name):
@@ -51,7 +52,7 @@ def install_deb(pkg, config):
 
 
 def fix_bundle_dir_permissions():
-    chown_cmd = "chown www-data {}/img/bundles/".format(JSLIBS_DIR)
+    chown_cmd = "chown www-data {}/img/bundles/".format(constants.JSLIBS_DIR)
     check_call(shlex.split(chown_cmd))
 
 
@@ -67,10 +68,11 @@ def get_or_generate_apikey(apikey):
 def install_npm_deps():
     weebl_ready = True
     hookenv.log('Installing npm packages...')
-    mkdir_p(JSLIBS_DIR)
-    for npm_pkg in NPM_PKGS:
-        command = "npm install --prefix {} ./npms/{}.tgz".format(
-            JSLIBS_DIR, npm_pkg.replace('@', '-'))
+    mkdir_p(constants.JSLIBS_DIR)
+    for npm_pkg in constants.NPM_PKGS:
+        pkg_path = os.path.join(constants.NPMDIR, npm_pkg.replace('@', '-')
+        command = "npm install --prefix {} {}.tgz".format(
+            constants.JSLIBS_DIR, pkg_path)
         try:
             check_call(shlex.split(command))
         except CalledProcessError:
@@ -85,11 +87,15 @@ def install_npm_deps():
 
 def install_pip_deps():
     hookenv.log('Installing pip packages...')
-    install_cmd = 'pip3 install -U --no-index -f wheels -r wheels/wheels.txt'
-    try:
-        check_call(shlex.split(install_cmd))
-    except CalledProcessError:
-        err_msg = "Failed to install pip packages"
-        hookenv.log(err_msg)
-        return False
-    return True
+    install_cmd = "pip3 install -U --no-index -f {} {}".format(
+        constants.PIPDIR, wheel)
+    failed = False
+    for wheel in glob(os.path.join('{}/*'.format(constants.PIPDIR))):
+        install_cmd = "pip3 install -U --no-index -f {} {}".format(constants.PIPDIR, wheel)
+        try:
+            check_call(shlex.split(install_cmd))
+        except CalledProcessError:
+            err_msg = "Failed to install the '{}' wheel via pip".format(wheel)
+            hookenv.log(err_msg)
+            failed = True
+    return False if failed else True

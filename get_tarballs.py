@@ -9,14 +9,14 @@ from lib.charms.layer.weebl import constants
 from subprocess import check_output, check_call
 
 
-def install_debs(install_me):
+def install_debs(requires_installation):
     try:
         cache.update()
         cache.open()
     except LockFailedException:
         sys.exit("\nPlease run again as sudo\n")
 
-    for pkg_name in install_me:
+    for pkg_name in requires_installation:
         pkg = cache[pkg_name]
         pkg.mark_install()
         cache.commit()
@@ -24,13 +24,13 @@ def install_debs(install_me):
 
 def update_debs_if_necessary():
     cache = apt.cache.Cache()
-    install_me = []
+    requires_installation = []
     for pkg_name in constants.DEB_PKGS:
         pkg = cache[pkg_name]
         if not pkg.is_installed:
-            install_me.append(pkg)
-    if install_me:
-        install_debs(install_me)
+            requires_installation.append(pkg)
+    if requires_installation:
+        install_debs(requires_installation)
 
 
 def chown(path):
