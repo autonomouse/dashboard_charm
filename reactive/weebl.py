@@ -111,7 +111,10 @@ def install_weebl(*args, **kwargs):
     setup_weebl_site(config['username'])
     utils.fix_bundle_dir_permissions()
     if not weebl_ready:
-        raise Exception('Weebl installation failed')
+        msg = ('Weebl installation failed: deb pkgs installed: {}, '
+               'npm pkgs installed: {}, pip pkgs installed: {}')
+        raise Exception(msg.format(
+            deb_pkg_installed, npm_pkgs_installed, pip_pkgs_installed))
     load_fixtures()
     return weebl_ready
 
