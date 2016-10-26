@@ -24,6 +24,7 @@ def update_debs():
 
 
 def custom_update(directory, pks, cmd):
+    original_wd = os.getcwd()
     sudo_id = os.environ.get('SUDO_ID', 1000)
     sudo_gid = os.environ.get('SUDO_GID', 1000)
     path = os.path.abspath(directory)
@@ -48,7 +49,6 @@ def update_npm():
 
 
 def main():
-    original_wd = os.getcwd()
     update_debs()
     update_pip()
     update_npm()
