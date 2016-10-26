@@ -86,16 +86,12 @@ def install_npm_deps():
 
 def install_pip_deps():
     hookenv.log('Installing pip packages...')
-    install_cmd = "pip3 install -U --no-index -f {} {}".format(
-        constants.PIPDIR, wheel)
-    failed = False
-    for wheel in constants.PIP_PKGS:
-        install_cmd = "pip3 install -U --no-index -f {} {}".format(
-            constants.PIPDIR, wheel)
-        try:
-            check_call(shlex.split(install_cmd))
-        except CalledProcessError:
-            err_msg = "Failed to install the '{}' wheel via pip".format(wheel)
-            hookenv.log(err_msg)
-            failed = True
-    return False if failed else True
+    install_cmd = 'pip3 install -U --no-index -f {} {}'.format(
+        constants.PIPDIR, ' '.join(constants.PIP_PKGS))
+    try:
+        check_call(shlex.split(install_cmd))
+    except CalledProcessError:
+        err_msg = "Failed to install pip packages"
+        hookenv.log(err_msg)
+        return False
+    return True
