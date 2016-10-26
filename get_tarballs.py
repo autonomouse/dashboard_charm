@@ -3,6 +3,7 @@
 import os
 import sys
 import apt
+import shutil
 from apt.cache import LockFailedException
 from lib.charms.layer.weebl import constants
 from subprocess import check_output, check_call
@@ -23,13 +24,16 @@ def update_debs():
             cache.commit()
 
 
-def custom_update(directory, pks, cmd):
+def custom_update(directory, pkgs, cmd):
     original_wd = os.getcwd()
     sudo_id = os.environ.get('SUDO_ID', 1000)
     sudo_gid = os.environ.get('SUDO_GID', 1000)
     path = os.path.abspath(directory)
-    if not os.path.exists(path):
-        os.mkdir(path)
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+    os.mkdir(path)
     try:
         os.chdir(path)
         for pkg in pkgs:
