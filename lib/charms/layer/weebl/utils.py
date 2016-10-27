@@ -13,6 +13,7 @@ from string import hexdigits
 from charmhelpers.core import hookenv
 from subprocess import check_call, check_output, CalledProcessError
 from charms.layer.weebl import constants
+from charmhelpers.core.templating import render
 
 
 def mkdir_p(directory_name):
@@ -27,6 +28,16 @@ def cmd_service(cmd, service):
     command = "systemctl {} {}".format(cmd, service)
     hookenv.log(command)
     check_call(shlex.split(command))
+
+
+def django_admin(cmd):
+    hookenv.log(cmd)
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
+    command = "django-admin {}".format(cmd)
+    try:
+        check_call(shlex.split(command))
+    except CalledProcessError:
+        hookenv.log("Error using \"{}\" with Weebl's django-admin")
 
 
 def install_deb(pkg, config):
@@ -69,7 +80,7 @@ def install_npm_deps():
     hookenv.log('Installing npm packages...')
     mkdir_p(constants.JSLIBS_DIR)
     for npm_pkg in constants.NPM_PKGS:
-        pkg_path = os.path.join(constants.NPMDIR, npm_pkg.replace('@', '-')
+        pkg_path = os.path.join(constants.NPMDIR, npm_pkg.replace('@', '-'))
         command = "npm install --prefix {} {}.tgz".format(
             constants.JSLIBS_DIR, pkg_path)
         try:
@@ -95,3 +106,43 @@ def install_pip_deps():
         hookenv.log(err_msg)
         return False
     return True
+
+
+def setup_weebl_gunicorn_service(config):
+    render(
+        source="weebl-gunicorn.service",
+        target="/lib/systemd/system/weebl-gunicorn.service",
+        context={'extra_options': config['extra_options']})
+    cmd_service('enable', 'weebl-gunicorn')
+
+
+def setup_weebl_site(weebl_name):
+    hookenv.log('Setting up weebl site...')
+    django_admin("set_up_site \"{}\"".format(weebl_name))
+
+
+def load_fixtures():
+    hookenv.log('Loading fixtures...')
+    django_admin("loaddata initial_settings.yaml")
+
+
+def install_weebl(config):
+    hookenv.status_set('maintenance', 'Installing Weebl...')
+    weebl_ready = False
+    deb_pkg_installed = install_deb(WEEBL_PKG, config)
+    npm_pkgs_installed = install_npm_deps()
+    pip_pkgs_installed = install_pip_deps()
+    if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
+        weebl_ready = True
+    setup_weebl_gunicorn_service(config)
+    cmd_service('start', 'weebl-gunicorn')
+    cmd_service('restart', 'nginx')
+    setup_weebl_site(config['username'])
+    fix_bundle_dir_permissions()
+    if not weebl_ready:
+        msg = ('Weebl installation failed: deb pkgs installed: {}, '
+               'npm pkgs installed: {}, pip pkgs installed: {}')
+        raise Exception(msg.format(
+            deb_pkg_installed, npm_pkgs_installed, pip_pkgs_installed))
+    load_fixtures()
+    return weebl_ready

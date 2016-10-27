@@ -19,3 +19,70 @@ juju_ip, _, weebl_ip, __ = os.environ['SSH_CONNECTION'].split(' ')
 print("Database dumped to '{}' on {}".format(output, weebl_ip))
 
 # TODO: scp $OUTPUT to $JUJU_IP
+
+
+
+'''
+#!/usr/bin/env python3
+import sys
+sys.path.insert(0, os.path.join(os.environ['CHARM_DIR'], 'lib'))
+
+@hooks.hook("backup")
+@user_action
+def backup(user):
+    """
+    Back-up current Weebl database.
+    """
+
+
+
+
+import os
+import yaml
+import shlex
+import socket
+from datetime import datetime
+from subprocess import check_output
+from charmhelpers.core.hookenv import action_get
+
+timeout = action_get('filename')
+
+
+with open("/etc/weebl/weebl.yaml") as f:
+    weebl_data = yaml.load(f.read())
+now = datetime.now().strftime("%F_%H-%M-%S")
+out = "weebl_db_backup_{}_{}".format(socket.gethostname(), now)
+cmd = ("PGPASSWORD={password} pg_dump -h {host} -U {user} -p {port} -x -F "
+       "t {database} > {output}".format(**weebl_data['database'], output=out))
+check_output(shlex.split(cmd))
+juju_ip, _, weebl_ip, __ = os.environ['SSH_CONNECTION'].split(' ')
+print("Database dumped to '{}' on {}".format(output, weebl_ip))
+
+# TODO: scp $OUTPUT to $JUJU_IP
+
+#--------------
+
+from charmhelpers.core import (
+    hookenv,
+    host,
+)
+
+@hooks.hook("add-user")
+@user_action
+def add_user(user):
+    """
+    Add a user.
+    """
+    key = hookenv.action_get("key")
+    psw = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                  for _ in range(16))
+    host.adduser(user, password=psw, shell='/usr/bin/git-shell')
+    host.add_user_to_group(user, GIT_GROUP)
+    host.mkdir("/home/%s/.ssh" % (user), owner=user,
+               group=user, perms=0o700, force=True)
+    host.write_file("/home/%s/.ssh/authorized_keys" % (user), key,
+                    owner=user, group=user, perms=0o600)
+
+if __name__ == "__main__":
+    hooks.execute(sys.argv)
+'''

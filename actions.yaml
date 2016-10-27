@@ -2,3 +2,9 @@ update:
   description: Update Weebl
 backup:
   description: Back-up current Weebl database
+  params:
+    filename:
+      type: string
+      description: The name of the file the database will be dumped to.
+  required: [filename]
+  additionalProperties: false
