@@ -10,7 +10,6 @@ hooks = hookenv.Hooks()
 
 
 @hooks.hook("update")
-@user_action
 def update():
     """ Update Weebl. """
 

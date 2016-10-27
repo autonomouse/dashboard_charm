@@ -104,8 +104,7 @@ def install_pip_deps():
         try:
             check_call(shlex.split(install_cmd))
         except CalledProcessError:
-            err_msg = "Failed to pip install the '{}' wheel".format(pip_pkg)
-            hookenv.log(err_msg)
+            hookenv.log("Failed to pip install the '{}' wheel".format(pip_pkg))
             pips_installed = False
     return pips_installed
 
