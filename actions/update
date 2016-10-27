@@ -1,8 +1,21 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 from charmhelpers.core import hookenv
 sys.path.insert(0, os.path.join(os.environ['CHARM_DIR'], 'lib'))
 from lib.charms.layer.weebl import utils
+from charmhelpers.core import hookenv
 
-utils.install_weebl(hookenv.config())
+hooks = hookenv.Hooks()
+
+@hooks.hook("update")
+@user_action
+def update():
+    """ Update Weebl. """
+
+    utils.install_weebl(hookenv.config())
+
+
+if __name__ == "__main__":
+    hooks.execute(sys.argv)
