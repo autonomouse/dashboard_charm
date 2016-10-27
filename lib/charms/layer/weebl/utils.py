@@ -69,7 +69,7 @@ def install_npm_deps():
     hookenv.log('Installing npm packages...')
     mkdir_p(constants.JSLIBS_DIR)
     for npm_pkg in constants.NPM_PKGS:
-        pkg_path = os.path.join(constants.NPMDIR, npm_pkg.replace('@', '-')
+        pkg_path = os.path.join(constants.NPMDIR, npm_pkg.replace('@', '-'))
         command = "npm install --prefix {} {}.tgz".format(
             constants.JSLIBS_DIR, pkg_path)
         try:
