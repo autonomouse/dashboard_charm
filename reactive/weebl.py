@@ -68,7 +68,7 @@ def migrate_db():
 
 @when('database.database.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
-    return utils.install_weebl(config)
+    return utils.install_weebl(config, WEEBL_PKG)
 
 
 def render_config(pgsql):
@@ -94,7 +94,7 @@ def setup_database(pgsql):
         hookenv.log('Configuring weebl db!')
         hookenv.status_set('maintenance', 'weebl is connecting to pgsql!')
         render_config(pgsql)
-        if utils.install_weebl(config):
+        if utils.install_weebl(config, WEEBL_PKG):
             hookenv.status_set('active', 'Ready')
             set_state('weebl.ready')
         else:

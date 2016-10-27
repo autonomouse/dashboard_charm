@@ -1,28 +1,4 @@
 #!/usr/bin/env python3
-'''
-import os
-import yaml
-import shlex
-import socket
-from datetime import datetime
-from subprocess import check_output
-
-
-with open("/etc/weebl/weebl.yaml") as f:
-    weebl_data = yaml.load(f.read())
-now = datetime.now().strftime("%F_%H-%M-%S")
-out = "weebl_db_backup_{}_{}".format(socket.gethostname(), now)
-cmd = ("PGPASSWORD={password} pg_dump -h {host} -U {user} -p {port} -x -F "
-       "t {database} > {output}".format(**weebl_data['database'], output=out))
-check_output(shlex.split(cmd))
-juju_ip, _, weebl_ip, __ = os.environ['SSH_CONNECTION'].split(' ')
-print("Database dumped to '{}' on {}".format(output, weebl_ip))
-
-# TODO: scp $OUTPUT to $JUJU_IP
-
-
-
-'''
 
 import os
 import sys
@@ -35,9 +11,11 @@ from charmhelpers.core import hookenv
 
 hooks = hookenv.Hooks()
 
+
 def get_weebl_data(weebl_yaml="/etc/weebl/weebl.yaml"):
     with open(weebl_yaml) as f:
         return yaml.load(f.read())
+
 
 def save_database_dump(weebl_data, filename, timestamp_format="%F_%H-%M-%S"):
     now = datetime.now().strftime(timestamp_format)
@@ -48,6 +26,7 @@ def save_database_dump(weebl_data, filename, timestamp_format="%F_%H-%M-%S"):
     check_output(shlex.split(cmd))
     juju_ip, _, weebl_ip, __ = os.environ['SSH_CONNECTION'].split(' ')
     return os.path.abspath(out)
+
 
 @hooks.hook("backup")
 @user_action
@@ -60,39 +39,3 @@ def backup(filename):
 
 if __name__ == "__main__":
     hooks.execute(sys.argv)
-
-
-'''
-timeout = hookenv.action_get('filename')
-
-
-
-
-# TODO: scp $OUTPUT to $JUJU_IP
-
-#--------------
-
-from charmhelpers.core import (
-    hookenv,
-    host,
-)
-
-@hooks.hook("add-user")
-@user_action
-def add_user(user):
-    """
-    Add a user.
-    """
-    key = hookenv.action_get("key")
-    psw = ''.join(random.choice(string.ascii_uppercase + string.digits)
-                  for _ in range(16))
-    host.adduser(user, password=psw, shell='/usr/bin/git-shell')
-    host.add_user_to_group(user, GIT_GROUP)
-    host.mkdir("/home/%s/.ssh" % (user), owner=user,
-               group=user, perms=0o700, force=True)
-    host.write_file("/home/%s/.ssh/authorized_keys" % (user), key,
-                    owner=user, group=user, perms=0o600)
-
-if __name__ == "__main__":
-    hooks.execute(sys.argv)
-'''

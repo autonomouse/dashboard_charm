@@ -97,15 +97,17 @@ def install_npm_deps():
 
 def install_pip_deps():
     hookenv.log('Installing pip packages...')
-    install_cmd = 'pip3 install -U --no-index -f {} {}'.format(
-        constants.PIPDIR, ' '.join(constants.PIP_PKGS))
-    try:
-        check_call(shlex.split(install_cmd))
-    except CalledProcessError:
-        err_msg = "Failed to install pip packages"
-        hookenv.log(err_msg)
-        return False
-    return True
+    pips_installed = True
+    for pip_pkg in constants.PIP_PKGS:
+        install_cmd = 'pip3 install -U --no-index -f {} {}'.format(
+            constants.PIPDIR, pip_pkg)
+        try:
+            check_call(shlex.split(install_cmd))
+        except CalledProcessError:
+            err_msg = "Failed to pip install the '{}' wheel".format(pip_pkg)
+            hookenv.log(err_msg)
+            pips_installed = False
+    return pips_installed
 
 
 def setup_weebl_gunicorn_service(config):
@@ -126,10 +128,10 @@ def load_fixtures():
     django_admin("loaddata initial_settings.yaml")
 
 
-def install_weebl(config):
+def install_weebl(config, weebl_pkg):
     hookenv.status_set('maintenance', 'Installing Weebl...')
     weebl_ready = False
-    deb_pkg_installed = install_deb(WEEBL_PKG, config)
+    deb_pkg_installed = install_deb(weebl_pkg, config)
     npm_pkgs_installed = install_npm_deps()
     pip_pkgs_installed = install_pip_deps()
     if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
