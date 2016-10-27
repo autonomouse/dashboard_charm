@@ -103,8 +103,9 @@ def install_pip_deps():
     hookenv.log('Installing pip packages...')
     pips_installed = True
     for pip_pkg in constants.PIP_PKGS:
+        pkg_path = os.path.join(constants.PIPDIR, pip_pkg)
         install_cmd = 'pip3 install -U --no-index -f {} {}'.format(
-            constants.PIPDIR, pip_pkg)
+            constants.PIPDIR, pkg_path)
         try:
             check_call(shlex.split(install_cmd))
         except CalledProcessError:

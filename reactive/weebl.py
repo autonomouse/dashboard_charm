@@ -11,7 +11,7 @@ from charms.layer.weebl.constants import JSLIBS_DIR, WEEBL_PKG
 config = hookenv.config()
 
 
-@when('database.connected')
+@when('database.database.connected')
 def request_db(pgsql):
     if hookenv.in_relation_hook():
         hookenv.log('Setting db relation options')
@@ -36,7 +36,7 @@ def create_default_user(username, email, uid, apikey):
         raise Exception(err_msg)
 
 
-@when('database.master.available', 'nginx.available', 'weebl.ready')
+@when('database.database.available', 'nginx.available', 'weebl.ready')
 def set_default_credentials(*args, **kwargs):
     if '_apikey' in config:
         hookenv.log('Apikey already set')
