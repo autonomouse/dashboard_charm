@@ -1,2 +1,4 @@
 update:
   description: Update Weebl
+backup:
+  description: Back-up current Weebl database
