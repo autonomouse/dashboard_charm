@@ -5,6 +5,7 @@ import sys
 from charmhelpers.core import hookenv
 sys.path.insert(0, os.path.join(os.environ['CHARM_DIR'], 'lib'))
 from charms.layer.weebl.constants import WEEBL_PKG
+from charms.layer.weebl import utils
 from charmhelpers.core import hookenv
 hooks = hookenv.Hooks()
 

@@ -61,9 +61,13 @@ def install_deb(pkg, config):
     return True
 
 
-def fix_bundle_dir_permissions():
-    chown_cmd = "chown www-data {}/img/bundles/".format(constants.JSLIBS_DIR)
+def chown(owner, path):
+    chown_cmd = "chown {} {}".format(owner, path)
     check_call(shlex.split(chown_cmd))
+
+
+def fix_bundle_dir_permissions():
+    chown("www-data", "{}/img/bundles/".format(constants.JSLIBS_DIR))
 
 
 def get_or_generate_apikey(apikey):
