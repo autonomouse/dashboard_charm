@@ -11,7 +11,7 @@ from charms.layer.weebl.constants import JSLIBS_DIR, WEEBL_PKG
 config = hookenv.config()
 
 
-@when('database.database.connected')
+@when('database.connected')
 def request_db(pgsql):
     if hookenv.in_relation_hook():
         hookenv.log('Setting db relation options')
@@ -36,7 +36,7 @@ def create_default_user(username, email, uid, apikey):
         raise Exception(err_msg)
 
 
-@when('database.database.available', 'nginx.available', 'weebl.ready')
+@when('database.master.available', 'nginx.available', 'weebl.ready')
 def set_default_credentials(*args, **kwargs):
     if '_apikey' in config:
         hookenv.log('Apikey already set')
@@ -66,7 +66,7 @@ def migrate_db():
     check_call(shlex.split(command))
 
 
-@when('database.database.available', 'nginx.available', 'config.changed')
+@when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
     return utils.install_weebl(config, WEEBL_PKG)
 
@@ -88,7 +88,7 @@ def render_config(pgsql):
         weebl_db.write(yaml.dump(db_config))
 
 
-@when('database.database.available', 'nginx.available')
+@when('database.master.available', 'nginx.available')
 def setup_database(pgsql):
     if hookenv.in_relation_hook():
         hookenv.log('Configuring weebl db!')
