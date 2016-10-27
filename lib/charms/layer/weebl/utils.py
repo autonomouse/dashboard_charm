@@ -8,6 +8,7 @@ from charmhelpers.fetch import (
     apt_update,
     apt_install,
     )
+from glob import glob
 from random import choice
 from string import hexdigits
 from charmhelpers.core import hookenv
@@ -102,8 +103,7 @@ def install_npm_deps():
 def install_pip_deps():
     hookenv.log('Installing pip packages...')
     pips_installed = True
-    for pip_pkg in constants.PIP_PKGS:
-        pkg_path = os.path.join(constants.PIPDIR, pip_pkg)
+    for pip_path in glob(os.path.join(constants.PIPDIR, '*')):
         install_cmd = 'pip3 install -U --no-index -f {} {}'.format(
             constants.PIPDIR, pkg_path)
         try:
