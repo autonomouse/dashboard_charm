@@ -15,9 +15,11 @@ def update():
     """ Update Weebl. """
 
     if utils.install_weebl(hookenv.config(), WEEBL_PKG):
-        hookenv.action_set("Weebl update successful")
+        hookenv.action_set({"message": "Weebl update successful"})
+        hookenv.log("Weebl update successful")
     else:
-        hookenv.action_set("Weebl update failed")
+        hookenv.action_set({"message": "Weebl update failed"})
+        hookenv.log("Weebl update failed")
 
 
 if __name__ == "__main__":

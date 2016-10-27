@@ -29,11 +29,12 @@ def save_database_dump(weebl_data, filename, timestamp_format="%F_%H-%M-%S"):
 
 
 @hooks.hook("backup")
-@user_action
 def backup(filename):
     """ Back-up current Weebl database. """
+    hookenv.log("Dumping database to file")
     weebl_data = get_weebl_data()
     output_file_path = save_database_dump(weebl_data, filename)
+    hookenv.log("Saved database dump to {}".format(output_file_path))
     hookenv.action_set(output_file_path)
 
 
