@@ -105,7 +105,7 @@ def install_pip_deps():
     pips_installed = True
     for pip_path in glob(os.path.join(constants.PIPDIR, '*')):
         install_cmd = 'pip3 install -U --no-index -f {} {}'.format(
-            constants.PIPDIR, pkg_path)
+            constants.PIPDIR, pip_path)
         try:
             check_call(shlex.split(install_cmd))
         except CalledProcessError:
