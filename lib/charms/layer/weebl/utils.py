@@ -8,11 +8,13 @@ from charmhelpers.fetch import (
     apt_update,
     apt_install,
     )
+from glob import glob
 from random import choice
 from string import hexdigits
 from charmhelpers.core import hookenv
 from subprocess import check_call, check_output, CalledProcessError
 from charms.layer.weebl import constants
+from charmhelpers.core.templating import render
 
 
 def mkdir_p(directory_name):
@@ -27,6 +29,16 @@ def cmd_service(cmd, service):
     command = "systemctl {} {}".format(cmd, service)
     hookenv.log(command)
     check_call(shlex.split(command))
+
+
+def django_admin(cmd):
+    hookenv.log(cmd)
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
+    command = "django-admin {}".format(cmd)
+    try:
+        check_call(shlex.split(command))
+    except CalledProcessError:
+        hookenv.log("Error using \"{}\" with Weebl's django-admin")
 
 
 def install_deb(pkg, config):
@@ -50,9 +62,13 @@ def install_deb(pkg, config):
     return True
 
 
-def fix_bundle_dir_permissions():
-    chown_cmd = "chown www-data {}/img/bundles/".format(constants.JSLIBS_DIR)
+def chown(owner, path):
+    chown_cmd = "chown {} {}".format(owner, path)
     check_call(shlex.split(chown_cmd))
+
+
+def fix_bundle_dir_permissions():
+    chown("www-data", "{}/img/bundles/".format(constants.JSLIBS_DIR))
 
 
 def get_or_generate_apikey(apikey):
@@ -86,12 +102,54 @@ def install_npm_deps():
 
 def install_pip_deps():
     hookenv.log('Installing pip packages...')
-    install_cmd = 'pip3 install -U --no-index -f {} {}'.format(
-        constants.PIPDIR, ' '.join(constants.PIP_PKGS))
-    try:
-        check_call(shlex.split(install_cmd))
-    except CalledProcessError:
-        err_msg = "Failed to install pip packages"
-        hookenv.log(err_msg)
-        return False
-    return True
+    pips_installed = True
+    for pip_path in glob(os.path.join(constants.PIPDIR, '*')):
+        install_cmd = 'pip3 install -U --no-index -f {} {}'.format(
+            constants.PIPDIR, pip_path)
+        try:
+            check_call(shlex.split(install_cmd))
+        except CalledProcessError:
+            hookenv.log(
+                "Failed to pip install the '{}' wheel".format(pip_path))
+            pips_installed = False
+    return pips_installed
+
+
+def setup_weebl_gunicorn_service(config):
+    render(
+        source="weebl-gunicorn.service",
+        target="/lib/systemd/system/weebl-gunicorn.service",
+        context={'extra_options': config['extra_options']})
+    cmd_service('enable', 'weebl-gunicorn')
+
+
+def setup_weebl_site(weebl_name):
+    hookenv.log('Setting up weebl site...')
+    django_admin("set_up_site \"{}\"".format(weebl_name))
+
+
+def load_fixtures():
+    hookenv.log('Loading fixtures...')
+    django_admin("loaddata initial_settings.yaml")
+
+
+def install_weebl(config, weebl_pkg):
+    hookenv.status_set('maintenance', 'Installing Weebl...')
+    weebl_ready = False
+    deb_pkg_installed = install_deb(weebl_pkg, config)
+    npm_pkgs_installed = install_npm_deps()
+    pip_pkgs_installed = install_pip_deps()
+    if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
+        weebl_ready = True
+    setup_weebl_gunicorn_service(config)
+    cmd_service('start', 'weebl-gunicorn')
+    cmd_service('restart', 'nginx')
+    setup_weebl_site(config['username'])
+    fix_bundle_dir_permissions()
+    if not weebl_ready:
+        msg = ('Weebl installation failed: deb pkgs installed: {}, '
+               'npm pkgs installed: {}, pip pkgs installed: {}')
+        raise Exception(msg.format(
+            deb_pkg_installed, npm_pkgs_installed, pip_pkgs_installed))
+    load_fixtures()
+    return weebl_ready
