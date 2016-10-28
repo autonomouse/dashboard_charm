@@ -1,6 +1,8 @@
-JSLIBS_DIR = '/var/lib/weebl/static'
-WEEBL_PKG = 'python3-weebl'
-DEB_PKGS = [
+JSLIBS_DIR = "/var/lib/weebl/static"
+SVG_RELATIVE_DIR = "img/bundles"
+WEEBL_PKG = "python3-weebl"
+NON_WEEBL_DEB_PKGS = ["postgresql-client"]
+TARBALL_GEN_DEB_PKGS = [
     "libffi-dev",
     "npm"]
 PIP_PKGS = ["WeasyPrint"]

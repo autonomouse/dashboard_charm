@@ -25,7 +25,7 @@ def install_debs(requires_installation, cache):
 def update_debs_if_necessary():
     cache = apt.cache.Cache()
     requires_installation = []
-    for pkg_name in constants.DEB_PKGS:
+    for pkg_name in constants.TARBALL_GEN_DEB_PKGS:
         pkg = cache[pkg_name]
         if not pkg.is_installed:
             requires_installation.append(pkg)

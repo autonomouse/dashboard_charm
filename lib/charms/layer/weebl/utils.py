@@ -12,7 +12,7 @@ from glob import glob
 from random import choice
 from string import hexdigits
 from charmhelpers.core import hookenv
-from subprocess import check_call, check_output, CalledProcessError
+from subprocess import check_call, CalledProcessError
 from charms.layer.weebl import constants
 from charmhelpers.core.templating import render
 
@@ -68,7 +68,16 @@ def install_deb(pkg):
 
 def install_deb_from_ppa(weebl_pkg, config):
     add_ppa(config)
-    return install_deb(pkg)
+    return install_deb(weebl_pkg)
+
+
+def install_debs(weebl_pkg, config):
+    install_deb_from_ppa(weebl_pkg, config)
+    debs_installed_successfully = True
+    for deb_pkg in constants.NON_WEEBL_DEB_PKGS:
+        if install_deb(deb_pkg) is False:
+            debs_installed_successfully = False
+    return debs_installed_successfully
 
 
 def chown(owner, path):
@@ -145,7 +154,7 @@ def load_fixtures():
 def install_weebl(config, weebl_pkg):
     hookenv.status_set('maintenance', 'Installing Weebl...')
     weebl_ready = False
-    deb_pkg_installed = install_deb_from_ppa(weebl_pkg, config)
+    deb_pkg_installed = install_debs(weebl_pkg, config)
     npm_pkgs_installed = install_npm_deps()
     pip_pkgs_installed = install_pip_deps()
     if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
