@@ -41,14 +41,18 @@ def django_admin(cmd):
         hookenv.log("Error using \"{}\" with Weebl's django-admin")
 
 
-def install_deb(pkg, config):
-    hookenv.log('Installing/upgrading {}!'.format(pkg))
+def add_ppa(config):
+    hookenv.log('Adding ppa')
     ppa = config['ppa']
     ppa_key = config['ppa_key']
     try:
         add_source(ppa, ppa_key)
     except Exception:
         hookenv.log("Unable to add source PPA: {}".format(ppa))
+
+
+def install_deb(pkg):
+    hookenv.log('Installing/upgrading {}!'.format(pkg))
     try:
         apt_update()
     except Exception as e:
@@ -60,6 +64,11 @@ def install_deb(pkg, config):
         return False
     hookenv.log("{} installed!".format(pkg))
     return True
+
+
+def install_deb_from_ppa(weebl_pkg, config):
+    add_ppa(config)
+    return install_deb(pkg)
 
 
 def chown(owner, path):
@@ -136,7 +145,7 @@ def load_fixtures():
 def install_weebl(config, weebl_pkg):
     hookenv.status_set('maintenance', 'Installing Weebl...')
     weebl_ready = False
-    deb_pkg_installed = install_deb(weebl_pkg, config)
+    deb_pkg_installed = install_deb_from_ppa(weebl_pkg, config)
     npm_pkgs_installed = install_npm_deps()
     pip_pkgs_installed = install_pip_deps()
     if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
