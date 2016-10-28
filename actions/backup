@@ -40,3 +40,7 @@ def backup(filename):
 
 if __name__ == "__main__":
     hooks.execute(sys.argv)
+
+
+
+ALSO BACKUP SVGS!!!!!
