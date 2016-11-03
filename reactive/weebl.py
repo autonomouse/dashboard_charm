@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
+
 import os
 import shlex
 import yaml
 from charms.reactive import when, set_state
 from charmhelpers.core import hookenv
 from subprocess import check_call, CalledProcessError
-from charms.layer.weebl import utils
-from charms.layer.weebl.constants import JSLIBS_DIR, WEEBL_PKG
+from charms.layer.weebl import utils, charm_utils
 
 config = hookenv.config()
 
@@ -68,24 +68,7 @@ def migrate_db():
 
 @when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
-    return utils.install_weebl(config, WEEBL_PKG)
-
-
-def render_config(pgsql):
-    db_settings = {
-        'host':  pgsql.master['host'],
-        'port': pgsql.master['port'],
-        'database': pgsql.master['dbname'],
-        'user': pgsql.master['user'],
-        'password': pgsql.master['password'],
-    }
-    db_config = {
-        'database': db_settings,
-        'static_root': JSLIBS_DIR,
-    }
-    utils.mkdir_p('/etc/weebl/')
-    with open('/etc/weebl/weebl.yaml', 'w') as weebl_db:
-        weebl_db.write(yaml.dump(db_config))
+    return charm_utils.install_weebl(config)
 
 
 @when('database.master.available', 'nginx.available')
@@ -93,9 +76,5 @@ def setup_database(pgsql):
     if hookenv.in_relation_hook():
         hookenv.log('Configuring weebl db!')
         hookenv.status_set('maintenance', 'weebl is connecting to pgsql!')
-        render_config(pgsql)
-        if utils.install_weebl(config, WEEBL_PKG):
-            hookenv.status_set('active', 'Ready')
-            set_state('weebl.ready')
-        else:
-            hookenv.status_set('maintenance', 'Weebl installation failed')
+        utils.render_config(pgsql)
+        charm_utils.install_weebl(config)

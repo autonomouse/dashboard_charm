@@ -31,11 +31,3 @@ options:
     type: string
     default: None
     description: Random string of characters to enable API access.
-  http_proxy:
-    type: string
-    default: ""
-    description: HTTP proxy URL.
-  https_proxy:
-    type: string
-    default: ""
-    description: HTTPS proxy URL.
