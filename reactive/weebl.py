@@ -2,11 +2,10 @@
 
 import os
 import shlex
-import yaml
-from charms.reactive import when, set_state
 from charmhelpers.core import hookenv
-from subprocess import check_call, CalledProcessError
+from charms.reactive import when, set_state
 from charms.layer.weebl import utils, charm_utils
+from subprocess import check_call, CalledProcessError
 
 config = hookenv.config()
 

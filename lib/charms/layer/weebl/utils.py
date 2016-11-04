@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 import yaml
 import errno
 import shlex
-import shutil
 from glob import glob
 from random import choice
 from string import hexdigits
 from datetime import datetime
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call
 from charms.reactive import set_state
 from charmhelpers.core import hookenv
 from charmhelpers.fetch import (
@@ -70,8 +68,8 @@ def install_npm_deps():
     for npm_path in glob(os.path.join(NPM_DIR, '*')):
         command = "npm install --prefix {} {}.tgz".format(
             JSLIBS_DIR, npm_path)
-        check_call(shlex.split(command)):
-        hookenv.log("Installed {} via npm".format(npm_pkg))
+        check_call(shlex.split(command))
+        hookenv.log("Installed {} via npm".format(npm_path))
     return True
 
 

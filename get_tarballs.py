@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 
+import os
 import sys
 import apt
+import shutil
+from subprocess import check_call
 from apt.cache import LockFailedException
 
 
@@ -68,7 +71,7 @@ def generate_npm_packs():
 def recursive_chown_from_root(path):
     sudo_id = os.environ.get('SUDO_ID', 1000)
     sudo_gid = os.environ.get('SUDO_GID', 1000)
-    run_cli("chown -R {}:{} {}".format(sudo_id, sudo_gid, path), shell=True)
+    check_call("chown -R {}:{} {}".format(sudo_id, sudo_gid, path), shell=True)
 
 
 def main():
