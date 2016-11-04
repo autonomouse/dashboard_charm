@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import yaml
 import errno
 import shlex
@@ -10,29 +11,25 @@ from random import choice
 from string import hexdigits
 from datetime import datetime
 from subprocess import check_call, CalledProcessError
+from charms.reactive import set_state
+from charmhelpers.core import hookenv
+from charmhelpers.fetch import (
+    add_source,
+    apt_update,
+    apt_install,
+    )
+from charmhelpers.core.templating import render
 
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-JSLIBS_DIR = "/var/lib/weebl/static"
-NPM_PKGS = [
-    "angular@1.5.8",
-    "d3@3.5.17",
-    "nvd3@1.8.3",
-    "angular-nvd3@1.0.7"]
-PIPDIR = "./wheels/"
 WEEBL_YAML = '/etc/weebl/weebl.yaml'
-PIP_PKGS = ["WeasyPrint"]
-NPMDIR = "./npms/"
-
-
-def run_cli(cmd, err_msg=None, shell=False, raise_on_err=False):
-    try:
-        check_call(cmd, shell=shell)
-        return True
-    except CalledProcessError:
-        if raise_on_err:
-            raise Exception(err_msg)
-        return False
+WEEBL_PKG = "python3-weebl"
+NON_WEEBL_DEB_PKGS = [
+    "postgresql-client",
+    "python3-psycopg2"]
+PIP_DIR = "./wheels/"
+NPM_DIR = "./npms/"
+JSLIBS_DIR = "/var/lib/weebl/static"
 
 
 def mkdir_p(directory_name):
@@ -45,18 +42,13 @@ def mkdir_p(directory_name):
 
 def cmd_service(cmd, service):
     command = "systemctl {} {}".format(cmd, service)
-    run_cli(shlex.split(command))
+    hookenv.log(command)
+    check_call(shlex.split(command))
 
 
 def chown(owner, path):
     chown_cmd = "chown {} {}".format(owner, path)
-    run_cli(shlex.split(chown_cmd))
-
-
-def recursive_chown_from_root(path):
-    sudo_id = os.environ.get('SUDO_ID', 1000)
-    sudo_gid = os.environ.get('SUDO_GID', 1000)
-    run_cli("chown -R {}:{} {}".format(sudo_id, sudo_gid, path), shell=True)
+    check_call(shlex.split(chown_cmd))
 
 
 def fix_bundle_dir_permissions():
@@ -65,49 +57,43 @@ def fix_bundle_dir_permissions():
 
 def get_or_generate_apikey(apikey):
     if apikey not in [None, "", "None"]:
+        hookenv.log("Using apikey already provided.")
         return apikey
     else:
+        hookenv.log("No apikey provided - generating random apikey.")
         return ''.join([choice(hexdigits[:16]) for _ in range(40)])
 
 
 def install_npm_deps():
-    weebl_ready = True
+    hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
-    for npm_pkg in NPM_PKGS:
-        pkg_path = os.path.join(NPMDIR, npm_pkg.replace('@', '-'))
+    for npm_path in glob(os.path.join(NPM_DIR, '*')):
         command = "npm install --prefix {} {}.tgz".format(
-            JSLIBS_DIR, pkg_path)
-        output = run_cli(
-            shlex.split(command), raise_on_err=True,
-            err_msg="Failed to install {} via npm".format(npm_pkg))
-        if not output:
-            weebl_ready = False
-    return weebl_ready
+            JSLIBS_DIR, npm_path)
+        check_call(shlex.split(command)):
+        hookenv.log("Installed {} via npm".format(npm_pkg))
+    return True
 
 
 def install_pip_deps():
-    pips_installed = True
-    for pip_path in glob(os.path.join(PIPDIR, '*')):
+    hookenv.log('Installing pip packages...')
+    for pip_path in glob(os.path.join(PIP_DIR, '*')):
         install_cmd = 'pip3 install -U --no-index -f {} {}'.format(
-            PIPDIR, pip_path)
-        output = run_cli(
-            shlex.split(install_cmd), raise_on_err=False,
-            err_msg="Failed to install wheel: '{}'".format(pip_path))
-        if not output:
-            pips_installed = False
-    return pips_installed
+            PIP_DIR, pip_path)
+        check_call(shlex.split(install_cmd))
+    return True
 
 
 def setup_weebl_site(weebl_name):
+    hookenv.log('Setting up weebl site...')
     command = "django-admin set_up_site \"{}\"".format(weebl_name)
-    run_cli(shlex.split(command),
-            err_msg="Error using \"{}\" with Weebl's django-admin")
+    check_call(shlex.split(command))
 
 
 def load_fixtures():
+    hookenv.log('Loading fixtures...')
     command = "django-admin loaddata initial_settings.yaml"
-    run_cli(shlex.split(command),
-            err_msg="Error using \"{}\" with Weebl's django-admin")
+    check_call(shlex.split(command))
 
 
 def generate_timestamp(timestamp_format="%F_%H-%M-%S"):
@@ -135,26 +121,63 @@ def get_weebl_data():
     return yaml.load(open(WEEBL_YAML).read())['database']
 
 
-def generate_local_pkgs(directory, pkgs, cmd):
-    original_wd = os.getcwd()
-    path = os.path.abspath(directory)
+def add_ppa(config):
+    hookenv.log('Adding ppa')
+    ppa = config['ppa']
+    ppa_key = config['ppa_key']
     try:
-        shutil.rmtree(path)
-    except FileNotFoundError:
-        pass
-    os.mkdir(path)
-    try:
-        os.chdir(path)
-        for pkg in pkgs:
-            check_call(cmd.format(pkg), shell=True)
-    finally:
-        os.chdir(original_wd)
-        recursive_chown_from_root(path)
+        add_source(ppa, ppa_key)
+    except Exception:
+        hookenv.log("Unable to add source PPA: {}".format(ppa))
 
 
-def generate_pip_wheels():
-    generate_local_pkgs(PIPDIR, PIP_PKGS, "pip3 wheel {}")
+def install_deb_from_ppa(weebl_pkg, config):
+    add_ppa(config)
+    return install_deb(weebl_pkg)
 
 
-def generate_npm_packs():
-    generate_local_pkgs(NPMDIR, NPM_PKGS, "npm pack {}")
+def install_debs(weebl_pkg, config):
+    install_deb_from_ppa(weebl_pkg, config)
+    for deb_pkg in NON_WEEBL_DEB_PKGS:
+        install_deb(deb_pkg)
+    return True
+
+
+def install_weebl(config):
+    hookenv.status_set('maintenance', 'Installing Weebl...')
+    weebl_ready = False
+    deb_pkg_installed = install_debs(WEEBL_PKG, config)
+    npm_pkgs_installed = install_npm_deps()
+    pip_pkgs_installed = install_pip_deps()
+    if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
+        weebl_ready = True
+    setup_weebl_gunicorn_service(config)
+    cmd_service('start', 'weebl-gunicorn')
+    cmd_service('restart', 'nginx')
+    setup_weebl_site(config['username'])
+    fix_bundle_dir_permissions()
+    if not weebl_ready:
+        hookenv.status_set('maintenance', 'Weebl installation failed')
+        msg = ('Weebl installation failed: \ndeb pkgs installed: {},\n '
+               'npm pkgs installed: {}, \npip pkgs installed: {}')
+        raise Exception(msg.format(
+            deb_pkg_installed, npm_pkgs_installed, pip_pkgs_installed))
+    load_fixtures()
+    hookenv.status_set('active', 'Ready')
+    set_state('weebl.ready')
+    return weebl_ready
+
+
+def install_deb(pkg):
+    hookenv.log('Installing/upgrading {}!'.format(pkg))
+    apt_update()
+    apt_install([pkg])
+    hookenv.log("{} installed!".format(pkg))
+
+
+def setup_weebl_gunicorn_service(config):
+    render(
+        source="weebl-gunicorn.service",
+        target="/lib/systemd/system/weebl-gunicorn.service",
+        context={'extra_options': config['extra_options']})
+    cmd_service('enable', 'weebl-gunicorn')

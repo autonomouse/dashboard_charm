@@ -6,20 +6,15 @@ sys.path.insert(0, os.path.join(os.environ['CHARM_DIR'], 'lib'))
 import yaml
 import psycopg2
 from charms.layer.weebl import utils
+from subprocess import check_call
 
 
 def save_database_dump(weebl_data, output_file):
     db_dump_saved = False
-    try:
-        cmd = ("PGPASSWORD={password} pg_dump -h {host} -U {user} -p {port} -x"
-               " -F t {database} -f {out}".format(
-                    **weebl_data, out=output_file))
-        utils.run_cli(cmd, shell=True)
-        db_dump_saved = True
-    except Exception as e:
-        hookenv.log(e)
-    finally:
-        return db_dump_saved
+    check_call(
+        "PGPASSWORD={password} pg_dump -h {host} -U {user} -p {port} -x -F "
+        "t {database} -f {out}".format(**weebl_data, out=output_file))
+    return True
 
 
 def database_connection(sql, pwd, dbname='postgres', user='postgres',

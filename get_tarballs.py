@@ -3,12 +3,17 @@
 import sys
 import apt
 from apt.cache import LockFailedException
-from lib.charms.layer.weebl import utils
 
 
 TARBALL_GEN_DEB_PKGS = [
     "libffi-dev",
     "npm"]
+NPM_PKGS = [
+    "angular@1.5.8",
+    "d3@3.5.17",
+    "nvd3@1.8.3",
+    "angular-nvd3@1.0.7"]
+PIP_PKGS = ["WeasyPrint"]
 
 
 def install_debs(requires_installation, cache):
@@ -35,12 +40,43 @@ def update_debs_if_necessary():
         install_debs(requires_installation, cache)
 
 
+def generate_local_pkgs(directory, pkgs, cmd):
+    original_wd = os.getcwd()
+    path = os.path.abspath(directory)
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+    os.mkdir(path)
+    try:
+        os.chdir(path)
+        for pkg in pkgs:
+            check_call(cmd.format(pkg), shell=True)
+    finally:
+        os.chdir(original_wd)
+        recursive_chown_from_root(path)
+
+
+def generate_pip_wheels():
+    generate_local_pkgs("./wheels/", PIP_PKGS, "pip3 wheel {}")
+
+
+def generate_npm_packs():
+    generate_local_pkgs("./npms/", NPM_PKGS, "npm pack {}")
+
+
+def recursive_chown_from_root(path):
+    sudo_id = os.environ.get('SUDO_ID', 1000)
+    sudo_gid = os.environ.get('SUDO_GID', 1000)
+    run_cli("chown -R {}:{} {}".format(sudo_id, sudo_gid, path), shell=True)
+
+
 def main():
     update_debs_if_necessary()
-    utils.generate_pip_wheels()
-    utils.generate_npm_packs()
+    generate_pip_wheels()
+    generate_npm_packs()
     # So no need for sudo next time if root this time:
-    utils.recursive_chown_from_root("~/.npm")
+    recursive_chown_from_root("~/.npm")
 
 
 if __name__ == '__main__':
