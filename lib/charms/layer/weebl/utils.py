@@ -66,8 +66,7 @@ def install_npm_deps():
     hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
     for npm_path in glob(os.path.join(NPM_DIR, '*')):
-        command = "npm install --prefix {} {}.tgz".format(
-            JSLIBS_DIR, npm_path)
+        command = "npm install --prefix {} {}".format(JSLIBS_DIR, npm_path)
         check_call(shlex.split(command))
         hookenv.log("Installed {} via npm".format(npm_path))
     return True
