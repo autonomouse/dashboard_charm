@@ -4,7 +4,7 @@ import os
 import shlex
 from charmhelpers.core import hookenv
 from charms.reactive import when, set_state
-from charms.layer.weebl import utils, charm_utils
+from charms.layer.weebl import utils
 from subprocess import check_call, CalledProcessError
 
 config = hookenv.config()
@@ -67,7 +67,7 @@ def migrate_db():
 
 @when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
-    return charm_utils.install_weebl(config)
+    return utils.install_weebl(config)
 
 
 @when('database.master.available', 'nginx.available')
@@ -76,4 +76,4 @@ def setup_database(pgsql):
         hookenv.log('Configuring weebl db!')
         hookenv.status_set('maintenance', 'weebl is connecting to pgsql!')
         utils.render_config(pgsql)
-        charm_utils.install_weebl(config)
+        utils.install_weebl(config)
