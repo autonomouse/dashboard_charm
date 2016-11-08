@@ -2,7 +2,6 @@
 
 import os
 import sys
-import socket
 import shutil
 import tarfile
 import tempfile
@@ -13,7 +12,6 @@ from charms.layer.weebl import utils, db_connection
 hooks = hookenv.Hooks()
 tmp_dir = tempfile.mkdtemp()
 output_dir = '/home/ubuntu/backup/'
-SVG_RELATIVE_DIR = "img/bundles"
 
 
 def save_database_dump(weebl_data, filename, destination):
@@ -22,14 +20,6 @@ def save_database_dump(weebl_data, filename, destination):
     full_path = os.path.join(destination, filename)
     if db_connection.save_database_dump(weebl_data, full_path):
         hookenv.log("Database dump file saved to {}".format(destination))
-
-
-def copy_testrun_svgs(parent_dir):
-    hookenv.log("Copying test run svgs")
-    svg_dir = os.path.join(utils.JSLIBS_DIR, SVG_RELATIVE_DIR)
-    destination = os.path.join(parent_dir, 'bundles/')
-    shutil.copytree(svg_dir, destination)
-    hookenv.log("Bundle images (SVGs) copied to {}".format(destination))
 
 
 def make_tarfile(tarball_name, dir_to_compress, path):
@@ -59,7 +49,7 @@ def update():
     weebl_data = utils.get_weebl_data()
     os.makedirs(destination, exist_ok=True)
     save_database_dump(weebl_data, filename, destination)
-    copy_testrun_svgs(destination)
+    utils.backup_testrun_svgs(destination)
     output = make_tarfile(tarball_name, destination, output_dir)
     shutil.rmtree(tmp_dir)
     hookenv.action_set({
