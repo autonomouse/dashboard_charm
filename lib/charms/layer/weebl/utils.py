@@ -3,7 +3,6 @@
 import os
 import yaml
 import errno
-import shlex
 import shutil
 from glob import glob
 from random import choice
@@ -31,6 +30,7 @@ PIP_DIR = "./wheels/"
 NPM_DIR = "./npms/"
 JSLIBS_DIR = "/var/lib/weebl/static"
 SVG_DIR = os.path.join(JSLIBS_DIR, "img/bundles")
+
 
 def mkdir_p(directory_name):
     try:
@@ -159,11 +159,13 @@ def setup_weebl_gunicorn_service(config):
         context={'extra_options': config['extra_options']})
     cmd_service('enable', 'weebl-gunicorn')
 
+
 def backup_testrun_svgs(parent_dir):
     hookenv.log("Copying test run svgs")
     destination = os.path.join(parent_dir, 'bundles/')
     copy_tree(SVG_DIR, destination)
     hookenv.log("Bundle images (SVGs) copied to {}".format(destination))
+
 
 def add_testrun_svgs_to_bundles_dir(source):
     mkdir_p(SVG_DIR)
