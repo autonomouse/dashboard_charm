@@ -3,8 +3,8 @@
 import os
 import yaml
 import errno
-import shlex
 import psycopg2
+import shutil
 from glob import glob
 from random import choice
 from string import hexdigits
@@ -32,6 +32,7 @@ NPM_DIR = "./npms/"
 JSLIBS_DIR = "/var/lib/weebl/static"
 SVG_DIR = os.path.join(JSLIBS_DIR, "img/bundles")
 
+
 def mkdir_p(directory_name):
     try:
         os.makedirs(directory_name)
@@ -41,18 +42,13 @@ def mkdir_p(directory_name):
 
 
 def cmd_service(cmd, service):
-    command = "systemctl {} {}".format(cmd, service)
+    command = ['systemctl', cmd, service]
     hookenv.log(command)
-    check_call(shlex.split(command))
-
-
-def chown(owner, path):
-    chown_cmd = "chown {} {}".format(owner, path)
-    check_call(shlex.split(chown_cmd))
+    check_call(command)
 
 
 def fix_bundle_dir_permissions():
-    chown("www-data", "{}/img/bundles/".format(JSLIBS_DIR))
+    shutil.chown(path="{}/img/bundles/".format(JSLIBS_DIR), user="www-data")
 
 
 def get_or_generate_apikey(apikey):
@@ -68,31 +64,31 @@ def install_npm_deps():
     hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
     for npm_path in glob(os.path.join(NPM_DIR, '*')):
-        command = "npm install --prefix {} {}".format(JSLIBS_DIR, npm_path)
-        check_call(shlex.split(command))
-        hookenv.log("Installed {} via npm".format(npm_path))
-    return True
+        msg = "Installing {} via npm".format(npm_path)
+        hookenv.status_set('maintenance', msg)
+        hookenv.log(msg)
+        command = ['npm', 'install', '--prefix', JSLIBS_DIR, npm_path]
+        check_call(command)
 
 
 def install_pip_deps():
     hookenv.log('Installing pip packages...')
     for pip_path in glob(os.path.join(PIP_DIR, '*')):
-        install_cmd = 'pip3 install -U --no-index -f {} {}'.format(
-            PIP_DIR, pip_path)
-        check_call(shlex.split(install_cmd))
-    return True
+        msg = "Installing {} via pip".format(pip_path)
+        hookenv.status_set('maintenance', msg)
+        hookenv.log(msg)
+        check_call([
+            'pip3', 'install', '-U', '--no-index', '-f', PIP_DIR, pip_path])
 
 
 def setup_weebl_site(weebl_name):
     hookenv.log('Setting up weebl site...')
-    command = "django-admin set_up_site \"{}\"".format(weebl_name)
-    check_call(shlex.split(command))
+    check_call(['django-admin', 'set_up_site', '"weebl_name"'])
 
 
 def load_fixtures():
     hookenv.log('Loading fixtures...')
-    command = "django-admin loaddata initial_settings.yaml"
-    check_call(shlex.split(command))
+    check_call(['django-admin', 'loaddata', 'initial_settings.yaml'])
 
 
 def generate_timestamp(timestamp_format="%F_%H-%M-%S"):
@@ -120,51 +116,34 @@ def get_weebl_data():
     return yaml.load(open(WEEBL_YAML).read())['database']
 
 
-def add_ppa(config):
+def install_deb_from_ppa(weebl_pkg, config):
     hookenv.log('Adding ppa')
     ppa = config['ppa']
     ppa_key = config['ppa_key']
-    try:
-        add_source(ppa, ppa_key)
-    except Exception:
-        hookenv.log("Unable to add source PPA: {}".format(ppa))
-
-
-def install_deb_from_ppa(weebl_pkg, config):
-    add_ppa(config)
-    return install_deb(weebl_pkg)
+    add_source(ppa, ppa_key)
+    install_deb(weebl_pkg)
 
 
 def install_debs(weebl_pkg, config):
+    hookenv.status_set('maintenance', 'Installing Weebl package')
     install_deb_from_ppa(weebl_pkg, config)
     for deb_pkg in NON_WEEBL_DEB_PKGS:
+        hookenv.status_set('maintenance', 'Installing ' + deb_pkg + ' package')
         install_deb(deb_pkg)
-    return True
 
 
 def install_weebl(config):
-    hookenv.status_set('maintenance', 'Installing Weebl...')
-    weebl_ready = False
-    deb_pkg_installed = install_debs(WEEBL_PKG, config)
-    npm_pkgs_installed = install_npm_deps()
-    pip_pkgs_installed = install_pip_deps()
-    if deb_pkg_installed and npm_pkgs_installed and pip_pkgs_installed:
-        weebl_ready = True
+    install_debs(WEEBL_PKG, config)
+    install_npm_deps()
+    install_pip_deps()
     setup_weebl_gunicorn_service(config)
     cmd_service('start', 'weebl-gunicorn')
     cmd_service('restart', 'nginx')
     setup_weebl_site(config['username'])
     fix_bundle_dir_permissions()
-    if not weebl_ready:
-        hookenv.status_set('maintenance', 'Weebl installation failed')
-        msg = ('Weebl installation failed: \ndeb pkgs installed: {},\n '
-               'npm pkgs installed: {}, \npip pkgs installed: {}')
-        raise Exception(msg.format(
-            deb_pkg_installed, npm_pkgs_installed, pip_pkgs_installed))
     load_fixtures()
     hookenv.status_set('active', 'Ready')
     set_state('weebl.ready')
-    return weebl_ready
 
 
 def install_deb(pkg):
@@ -197,27 +176,29 @@ def add_testrun_svgs_to_bundles_dir(source):
 
 
 def remote_db_cli_interaction(app, weebl_data, custom=''):
-    return check_call(
-        "PGPASSWORD={password} {app} -h {host} -U {user} -p {port} {custom}"
-        .format(**weebl_data, app=app, custom=custom), shell=True)
+    os.environ['PGPASSWORD'] = weebl_data['password']
+    base_cmd = [app, '-h', weebl_data['host'], '-U', weebl_data['user'], '-p',
+                weebl_data['port']]
+    base_cmd.extend(custom)
+    return check_call(base_cmd)
 
 
 def save_database_dump(weebl_data, output_file):
-    custom = "-f {} --no-owner --no-acl -x -F t -d {}".format(
-        output_file, weebl_data['database'])
+    custom = ['-f', 'output_file', '--no-owner', '--no-acl', '-x', '-F', 't',
+              '-d', weebl_data['database'])
     remote_db_cli_interaction("pg_dump", weebl_data, custom)
 
 
 def drop_database(database, weebl_data):
-    remote_db_cli_interaction("dropdb", weebl_data, database)
+    remote_db_cli_interaction("dropdb", weebl_data, [database])
 
 
 def create_empty_database(database, weebl_data, postgres_user="postgres"):
-    create_cmds = "{} -O {}".format(database, postgres_user)
+    create_cmds = [database, '-O', postgres_user]
     remote_db_cli_interaction("createdb", weebl_data, create_cmds)
 
 
 def upload_database_dump(weebl_data, dump_file):
-    restore_cmds = "-d {} --clean --exit-on-error {}".format(
-        weebl_data['database'], dump_file)
+    restore_cmds = ['-d', weebl_data['database'], '--clean', '--exit-on-error',
+                    dump_file]
     remote_db_cli_interaction("pg_restore", weebl_data, restore_cmds)
