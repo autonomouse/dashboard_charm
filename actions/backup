@@ -7,7 +7,7 @@ import tarfile
 import tempfile
 from charmhelpers.core import hookenv
 sys.path.insert(0, os.path.join(os.environ['CHARM_DIR'], 'lib'))
-from charms.layer.weebl import utils, db_connection
+from charms.layer.weebl import utils
 
 hooks = hookenv.Hooks()
 tmp_dir = tempfile.mkdtemp()
@@ -18,7 +18,7 @@ def save_database_dump(weebl_data, filename, destination):
     hookenv.log("Saving dump of '{database}' database from {host}".format(
         **weebl_data))
     full_path = os.path.join(destination, filename)
-    if db_connection.save_database_dump(weebl_data, full_path):
+    if utils.save_database_dump(weebl_data, full_path):
         hookenv.log("Database dump file saved to {}".format(destination))
 
 
