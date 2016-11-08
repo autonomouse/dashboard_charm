@@ -1,2 +1,4 @@
 update:
   description: Update Weebl
+  additionalProperties: false
+
