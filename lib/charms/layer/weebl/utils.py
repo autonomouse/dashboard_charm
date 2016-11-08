@@ -4,6 +4,7 @@ import os
 import yaml
 import errno
 import shlex
+import psycopg2
 from glob import glob
 from random import choice
 from string import hexdigits
@@ -180,14 +181,43 @@ def setup_weebl_gunicorn_service(config):
         context={'extra_options': config['extra_options']})
     cmd_service('enable', 'weebl-gunicorn')
 
+
 def backup_testrun_svgs(parent_dir):
     hookenv.log("Copying test run svgs")
     destination = os.path.join(parent_dir, 'bundles/')
     copy_tree(SVG_DIR, destination)
     hookenv.log("Bundle images (SVGs) copied to {}".format(destination))
 
+
 def add_testrun_svgs_to_bundles_dir(source):
     mkdir_p(SVG_DIR)
     bundles = os.path.join(source, 'weebl_data/bundles')
     copy_tree(bundles, SVG_DIR)
     hookenv.log("Bundle images (SVGs) copied into {}".format(SVG_DIR))
+
+
+def remote_db_cli_interaction(app, weebl_data, custom=''):
+    return check_call(
+        "PGPASSWORD={password} {app} -h {host} -U {user} -p {port} {custom}"
+        .format(**weebl_data, app=app, custom=custom), shell=True)
+
+
+def save_database_dump(weebl_data, output_file):
+    custom = "-f {} --no-owner --no-acl -x -F t -d {}".format(
+        output_file, weebl_data['database'])
+    remote_db_cli_interaction("pg_dump", weebl_data, custom)
+
+
+def drop_database(database, weebl_data):
+    remote_db_cli_interaction("dropdb", weebl_data, database)
+
+
+def create_empty_database(database, weebl_data, postgres_user="postgres"):
+    create_cmds = "{} -O {}".format(database, postgres_user)
+    remote_db_cli_interaction("createdb", weebl_data, create_cmds)
+
+
+def upload_database_dump(weebl_data, dump_file):
+    restore_cmds = "-d {} --clean --exit-on-error {}".format(
+        weebl_data['database'], dump_file)
+    remote_db_cli_interaction("pg_restore", weebl_data, restore_cmds)
