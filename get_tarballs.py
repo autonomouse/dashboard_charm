@@ -43,6 +43,12 @@ def update_debs_if_necessary():
         install_debs(requires_installation, cache)
 
 
+def recursive_chown_from_root(path):
+    sudo_id = os.environ.get('SUDO_ID', 1000)
+    sudo_gid = os.environ.get('SUDO_GID', 1000)
+    check_call("chown -R {}:{} {}".format(sudo_id, sudo_gid, path), shell=True)
+
+
 def generate_local_pkgs(directory, pkgs, cmd):
     original_wd = os.getcwd()
     path = os.path.abspath(directory)
@@ -66,12 +72,6 @@ def generate_pip_wheels():
 
 def generate_npm_packs():
     generate_local_pkgs("./npms/", NPM_PKGS, "npm pack {}")
-
-
-def recursive_chown_from_root(path):
-    sudo_id = os.environ.get('SUDO_ID', 1000)
-    sudo_gid = os.environ.get('SUDO_GID', 1000)
-    check_call("chown -R {}:{} {}".format(sudo_id, sudo_gid, path), shell=True)
 
 
 def main():
