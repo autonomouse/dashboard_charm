@@ -7,7 +7,7 @@ import tarfile
 import tempfile
 from charmhelpers.core import hookenv
 sys.path.insert(0, os.path.join(os.environ['CHARM_DIR'], 'lib'))
-from charms.layer.weebl import utils, db_connection
+from charms.layer.weebl import utils
 
 
 hooks = hookenv.Hooks()
@@ -17,7 +17,7 @@ def restore_database_from_dump(directory, weebl_data):
     subdir = os.path.join(directory, "weebl_data")
     [dump_file] = [file for file in os.listdir(subdir) if 'dump' in file]
     dump_file_path = os.path.join(subdir, dump_file)
-    db_connection.upload_database_dump(weebl_data, dump_file_path)
+    utils.upload_database_dump(weebl_data, dump_file_path)
 
 
 def restore_from_tarball(tarball, weebl_data):
@@ -47,8 +47,8 @@ def main(tarball):
         weebl_data = utils.get_weebl_data()
         # TODO: We should probably run the backup script here so that there is
         # a tarball available in case this action is run accidentally...
-        db_connection.drop_database(weebl_data['database'], weebl_data)
-        db_connection.create_empty_database(weebl_data['database'], weebl_data)
+        utils.drop_database(weebl_data['database'], weebl_data)
+        utils.create_empty_database(weebl_data['database'], weebl_data)
         utils.install_weebl(hookenv.config())
         restore_from_tarball(tarball, weebl_data)
         status_msg = 'Ready'
