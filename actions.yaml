@@ -1,4 +1,7 @@
 update:
   description: Update Weebl
   additionalProperties: false
+backup:
+  description: Back-up current Weebl database
+  additionalProperties: false
 
