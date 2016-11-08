@@ -1,6 +1,31 @@
-#!/usr/bin/env bash
+#!/usr/bin/env python3
 
-apt update
-apt --yes install python3-weebl
-chown www-data /var/lib/weebl/static/img/bundles
-systemctl restart weebl-gunicorn
+import os
+import sys
+from charmhelpers.core import hookenv
+sys.path.insert(0, os.path.join(os.environ['CHARM_DIR'], 'lib'))
+from charms.layer.weebl import utils
+
+hooks = hookenv.Hooks()
+
+
+@hooks.hook("update")
+def update():
+    """ Update Weebl. """
+    hookenv.status_set('maintenance', 'Updating Weebl packages')
+    msg = "Weebl update failed"
+    status = 'maintenance'
+    status_msg = 'Weebl installation failed'
+    try:
+        utils.install_weebl(hookenv.config())
+        msg = "Weebl update successful"
+        status = 'active'
+        status_msg = 'Ready'
+    finally:
+        hookenv.log(msg)
+        hookenv.status_set(status, status_msg)
+        hookenv.action_set({"message": msg})
+
+
+if __name__ == "__main__":
+    hooks.execute(sys.argv)
