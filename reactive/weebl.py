@@ -67,7 +67,7 @@ def migrate_db():
 
 @when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
-    return utils.install_weebl(config)
+    utils.install_weebl(config)
 
 
 @when('database.master.available', 'nginx.available')
