@@ -9,6 +9,7 @@ from random import choice
 from string import hexdigits
 from datetime import datetime
 from subprocess import check_call
+from distutils.dir_util import copy_tree
 from charms.reactive import set_state
 from charmhelpers.core import hookenv
 from charmhelpers.fetch import (
@@ -28,7 +29,7 @@ NON_WEEBL_DEB_PKGS = [
 PIP_DIR = "./wheels/"
 NPM_DIR = "./npms/"
 JSLIBS_DIR = "/var/lib/weebl/static"
-
+SVG_DIR = os.path.join(JSLIBS_DIR, "img/bundles")
 
 def mkdir_p(directory_name):
     try:
@@ -178,3 +179,15 @@ def setup_weebl_gunicorn_service(config):
         target="/lib/systemd/system/weebl-gunicorn.service",
         context={'extra_options': config['extra_options']})
     cmd_service('enable', 'weebl-gunicorn')
+
+def backup_testrun_svgs(parent_dir):
+    hookenv.log("Copying test run svgs")
+    destination = os.path.join(parent_dir, 'bundles/')
+    copy_tree(SVG_DIR, destination)
+    hookenv.log("Bundle images (SVGs) copied to {}".format(destination))
+
+def add_testrun_svgs_to_bundles_dir(source):
+    mkdir_p(SVG_DIR)
+    bundles = os.path.join(source, 'weebl_data/bundles')
+    copy_tree(bundles, SVG_DIR)
+    hookenv.log("Bundle images (SVGs) copied into {}".format(SVG_DIR))

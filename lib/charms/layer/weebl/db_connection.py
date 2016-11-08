@@ -4,24 +4,41 @@ import psycopg2
 from subprocess import check_call
 
 
-def save_database_dump(weebl_data, output_file):
+def remote_db_cli_interaction(app, weebl_data, custom=''):
     check_call(
-        "PGPASSWORD={password} pg_dump -h {host} -U {user} -p {port} -x -F "
-        "t {database} -f {out}".format(**weebl_data, out=output_file))
+        "PGPASSWORD={password} {app} -h {host} -U {user} -p {port} {custom}"
+        .format(**weebl_data, app=app, custom=custom), shell=True)
     return True
+
+def save_database_dump(weebl_data, output_file):
+    custom = "-f {} --no-owner --no-acl -x -F t -d {}".format(
+        output_file, weebl_data['database'])
+    remote_db_cli_interaction("pg_dump", weebl_data, custom)
+
+
+def drop_database(database, weebl_data):
+    remote_db_cli_interaction("dropdb", weebl_data, database)
+
+
+def create_empty_database(database, weebl_data, postgres_user="postgres"):
+    create_cmds = "{} -O {}".format(database, postgres_user)
+    remote_db_cli_interaction("createdb", weebl_data, create_cmds)
+
+
+def upload_database_dump(weebl_data, dump_file):
+    restore_cmds = "-d {} --clean --exit-on-error {}".format(
+        weebl_data['database'], dump_file)
+    remote_db_cli_interaction("pg_restore", weebl_data, restore_cmds)
 
 
 class DatabaseConnection():
 
-    def __init__(self, name, user, password, host, port, owner='postgres',
-                 dbname='postgres', isolation_lvl=0):
+    def __init__(self, name, user, password, host, port, isolation_lvl=0):
         self.name = name
         self.user = user
         self.host = host
         self.port = port
         self.pwd = password
-        self.owner = owner
-        self.dbname = dbname
         self.isolation_lvl = isolation_lvl
 
     def database_connection(self, sql, dbname=None, user=None, pwd=None):
@@ -36,8 +53,7 @@ class DatabaseConnection():
         try:
             cursor.execute(sql)
             response = cursor.fetchall()
-        except psycopg2.ProgrammingError as e:
-            response = e
+        finally:
             cursor.close()
             con.close()
         return response
