@@ -31,3 +31,11 @@ options:
     type: string
     default: None
     description: Random string of characters to enable API access.
+  debug_mode:
+    type: boolean
+    default: True
+    description: A boolean that turns on/off debug mode.
+  allowed_hosts:
+    type: string
+    default: '[]'
+    description: A list of strings representing the host/domain names to serve.
