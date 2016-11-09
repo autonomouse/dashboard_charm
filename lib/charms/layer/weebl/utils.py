@@ -171,6 +171,7 @@ def add_testrun_svgs_to_bundles_dir(source):
     mkdir_p(SVG_DIR)
     bundles = os.path.join(source, 'weebl_data/bundles')
     copy_tree(bundles, SVG_DIR)
+    fix_bundle_dir_permissions()
     hookenv.log("Bundle images (SVGs) copied into {}".format(SVG_DIR))
 
 
