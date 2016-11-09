@@ -3,7 +3,6 @@
 import os
 import yaml
 import errno
-import psycopg2
 import shutil
 from glob import glob
 from random import choice
@@ -185,7 +184,7 @@ def remote_db_cli_interaction(app, weebl_data, custom=''):
 
 def save_database_dump(weebl_data, output_file):
     custom = ['-f', 'output_file', '--no-owner', '--no-acl', '-x', '-F', 't',
-              '-d', weebl_data['database'])
+              '-d', weebl_data['database']]
     remote_db_cli_interaction("pg_dump", weebl_data, custom)
 
 
