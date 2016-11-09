@@ -179,7 +179,8 @@ def remote_db_cli_interaction(app, weebl_data, custom=''):
     base_cmd = [app, '-h', weebl_data['host'], '-U', weebl_data['user'], '-p',
                 weebl_data['port']]
     base_cmd.extend(custom)
-    hookenv.log("PGPASSWORD=" + os.environ['PGPASSWORD'] + ' ' + base_cmd)
+    hookenv.log(
+        "PGPASSWORD=" + os.environ['PGPASSWORD'] + " " + " ".join(base_cmd))
     return check_call(base_cmd)
 
 
