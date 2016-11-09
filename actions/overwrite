@@ -20,7 +20,7 @@ def restore_database_from_dump(directory, weebl_data):
     utils.upload_database_dump(weebl_data, dump_file_path)
 
 
-def restore_from_tarball(tarball, weebl_data, original_dir):
+def restore_from_tarball(tarball, weebl_data):
     if not tarball.endswith("tar.gz"):
         raise Exception("Can only extract from tar.gz tarballs...")
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -28,7 +28,6 @@ def restore_from_tarball(tarball, weebl_data, original_dir):
         with tarfile.open(tarball, "r:gz") as tar:
             tar.extractall()
             tar.close()
-        os.chdir(original_dir)
         utils.add_testrun_svgs_to_bundles_dir(tmp_dir)
         restore_database_from_dump(tmp_dir, weebl_data)
 
@@ -38,7 +37,6 @@ def main(tarball):
     status = 'maintenance'
     hookenv.status_set(status, status_msg)
     outcome_msg = 'Failed to overwrite database with {}'.format(tarball)
-    original_dir = os.getcwd()
     try:
         utils.cmd_service('stop', 'weebl-gunicorn')
         utils.cmd_service('stop', 'nginx')
@@ -47,13 +45,12 @@ def main(tarball):
         # a tarball available in case this action is run accidentally...
         utils.drop_database(weebl_data, weebl_data['database'])
         utils.create_empty_database(weebl_data, weebl_data['database'])
-        restore_from_tarball(tarball, weebl_data, original_dir)
+        restore_from_tarball(tarball, weebl_data)
         status_msg = 'Ready'
         status = 'active'
         outcome_msg = 'Database successfully overwritten with {}'.format(
             tarball)
     finally:
-        os.chdir(original_dir)
         utils.cmd_service('start', 'weebl-gunicorn')
         utils.cmd_service('start', 'nginx')
         hookenv.log(outcome_msg)
