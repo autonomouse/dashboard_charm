@@ -47,8 +47,8 @@ def main(tarball):
         weebl_data = utils.get_weebl_data()
         # TODO: We should probably run the backup script here so that there is
         # a tarball available in case this action is run accidentally...
-        utils.drop_database(weebl_data['database'], weebl_data)
-        utils.create_empty_database(weebl_data['database'], weebl_data)
+        utils.drop_database(weebl_data, weebl_data['database'])
+        utils.create_empty_database(weebl_data, weebl_data['database'])
         utils.install_weebl(hookenv.config())
         restore_from_tarball(tarball, weebl_data)
         status_msg = 'Ready'
