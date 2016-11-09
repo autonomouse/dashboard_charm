@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import shutil
+import tarfile
+import tempfile
+from charmhelpers.core import hookenv
+sys.path.insert(0, os.path.join(os.environ['CHARM_DIR'], 'lib'))
+from charms.layer.weebl import utils
+
+
+hooks = hookenv.Hooks()
+
+
+def restore_database_from_dump(directory, weebl_data):
+    subdir = os.path.join(directory, "weebl_data")
+    [dump_file] = [file for file in os.listdir(subdir) if 'dump' in file]
+    dump_file_path = os.path.join(subdir, dump_file)
+    utils.upload_database_dump(weebl_data, dump_file_path)
+
+
+def restore_from_tarball(tarball, weebl_data):
+    if not tarball.endswith("tar.gz"):
+        raise Exception("Can only extract from tar.gz tarballs...")
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        os.chdir(tmp_dir)
+        with tarfile.open(tarball, "r:gz") as tar:
+            tar.extractall()
+            tar.close()
+        utils.add_testrun_svgs_to_bundles_dir(tmp_dir)
+        restore_database_from_dump(tmp_dir, weebl_data)
+
+
+def main(tarball):
+    status_msg = 'Overwriting database with {}'.format(tarball)
+    status = 'maintenance'
+    hookenv.status_set(status, status_msg)
+    outcome_msg = 'Failed to overwrite database with {}'.format(tarball)
+    try:
+        utils.cmd_service('stop', 'weebl-gunicorn')
+        utils.cmd_service('stop', 'nginx')
+        weebl_data = utils.get_weebl_data()
+        # TODO: We should probably run the backup script here so that there is
+        # a tarball available in case this action is run accidentally...
+        utils.drop_database(weebl_data, weebl_data['database'])
+        utils.create_empty_database(weebl_data, weebl_data['database'])
+        restore_from_tarball(tarball, weebl_data)
+        status_msg = 'Ready'
+        status = 'active'
+        outcome_msg = 'Database successfully overwritten with {}'.format(
+            tarball)
+    finally:
+        utils.cmd_service('start', 'weebl-gunicorn')
+        utils.cmd_service('start', 'nginx')
+        hookenv.log(outcome_msg)
+        hookenv.status_set(status, status_msg)
+
+
+@hooks.hook("overwrite")
+def update():
+    """ Overwrite existing Weebl database. """
+    main(hookenv.action_get("tarball"))
+
+
+if __name__ == "__main__":
+    hooks.execute(sys.argv)
