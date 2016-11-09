@@ -3,6 +3,7 @@
 import os
 import yaml
 import errno
+import psycopg2
 import shutil
 from glob import glob
 from random import choice
@@ -172,3 +173,32 @@ def add_testrun_svgs_to_bundles_dir(source):
     bundles = os.path.join(source, 'weebl_data/bundles')
     copy_tree(bundles, SVG_DIR)
     hookenv.log("Bundle images (SVGs) copied into {}".format(SVG_DIR))
+
+
+def remote_db_cli_interaction(app, weebl_data, custom=''):
+    os.environ['PGPASSWORD'] = weebl_data['password']
+    base_cmd = [app, '-h', weebl_data['host'], '-U', weebl_data['user'], '-p',
+                weebl_data['port']]
+    base_cmd.extend(custom)
+    return check_call(base_cmd)
+
+
+def save_database_dump(weebl_data, output_file):
+    custom = ['-f', 'output_file', '--no-owner', '--no-acl', '-x', '-F', 't',
+              '-d', weebl_data['database'])
+    remote_db_cli_interaction("pg_dump", weebl_data, custom)
+
+
+def drop_database(weebl_data, database):
+    remote_db_cli_interaction("dropdb", weebl_data, [database])
+
+
+def create_empty_database(weebl_data, database, postgres_user="postgres"):
+    create_cmds = [database, '-O', postgres_user]
+    remote_db_cli_interaction("createdb", weebl_data, create_cmds)
+
+
+def upload_database_dump(weebl_data, dump_file):
+    restore_cmds = ['-d', weebl_data['database'], '--clean', '--exit-on-error',
+                    dump_file]
+    remote_db_cli_interaction("pg_restore", weebl_data, restore_cmds)
