@@ -10,28 +10,19 @@ sys.path.insert(0, os.path.join(os.environ['CHARM_DIR'], 'lib'))
 from charms.layer.weebl import utils
 
 hooks = hookenv.Hooks()
-tmp_dir = tempfile.mkdtemp()
 output_dir = '/home/ubuntu/backup/'
 
 
-def save_database_dump(weebl_data, filename, destination):
+def save_database_dump(weebl_data, full_path):
     hookenv.log("Saving dump of '{database}' database from {host}".format(
         **weebl_data))
-    full_path = os.path.join(destination, filename)
-    if utils.save_database_dump(weebl_data, full_path):
-        hookenv.log("Database dump file saved to {}".format(destination))
+    utils.save_database_dump(weebl_data, full_path):
+    hookenv.log("Database dump file saved to {}".format(destination))
 
 
-def make_tarfile(tarball_name, dir_to_compress, path):
-    utils.mkdir_p(path)
-    tarball = os.path.join(path, tarball_name)
-    try:
-        with tarfile.open(tarball, "w:gz") as tar:
-            tar.add(dir_to_compress, arcname="weebl_data")
-        hookenv.log("Tarball generated")
-    finally:
-        shutil.rmtree(dir_to_compress)
-        hookenv.log("{} removed".format(dir_to_compress))
+def make_tarfile(tarball, dir_to_compress):
+    with tarfile.open(tarball, "w:gz") as tar:
+        tar.add(dir_to_compress, arcname="weebl_data")
     hookenv.log("Tarball available at {}".format(tarball))
     return tarball
 
@@ -43,15 +34,17 @@ def update():
     hookenv.log(msg)
     hookenv.status_set('maintenance', msg)
     now = utils.generate_timestamp()
-    tarball_name = "weebl_backup_" + now + ".tar.gz"
+    utils.mkdir_p(output_dir)
     filename = "database_backup_" + now + ".dump"
-    destination = os.path.join(tmp_dir, "weebl_backup_" + now)
+    tarball_name = "weebl_backup_" + now + ".tar.gz"
+    tarball = os.path.join(output_dir, tarball_name)
     weebl_data = utils.get_weebl_data()
-    os.makedirs(destination, exist_ok=True)
-    save_database_dump(weebl_data, filename, destination)
-    utils.backup_testrun_svgs(destination)
-    output = make_tarfile(tarball_name, destination, output_dir)
-    shutil.rmtree(tmp_dir)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        destination = os.path.join(tmp_dir, "weebl_backup_" + now)
+        os.makedirs(destination, exist_ok=True)
+        save_database_dump(weebl_data, os.path.join(destination, filename))
+        utils.backup_testrun_svgs(destination)
+        output = make_tarfile(tarball, destination)
     hookenv.action_set({
         "output": output
     })
