@@ -40,6 +40,8 @@ def main(tarball):
     outcome_msg = 'Failed to overwrite database with {}'.format(tarball)
     original_dir = os.getcwd()
     try:
+        utils.cmd_service('stop', 'weebl-gunicorn')
+        utils.cmd_service('stop', 'nginx')
         weebl_data = utils.get_weebl_data()
         # TODO: We should probably run the backup script here so that there is
         # a tarball available in case this action is run accidentally...
@@ -52,8 +54,8 @@ def main(tarball):
             tarball)
     finally:
         os.chdir(original_dir)
-        utils.cmd_service('restart', 'weebl-gunicorn')
-        utils.cmd_service('restart', 'nginx')
+        utils.cmd_service('start', 'weebl-gunicorn')
+        utils.cmd_service('start', 'nginx')
         hookenv.log(outcome_msg)
         hookenv.status_set(status, status_msg)
 
