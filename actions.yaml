@@ -4,4 +4,11 @@ update:
 backup:
   description: Back-up current Weebl database
   additionalProperties: false
-
+overwrite:
+  description: Replace current Weebl database with a back-up database dump file
+  params:
+    tarball:
+      type: string
+      description: The name of the snapshot file.
+  required: [tarball]
+  additionalProperties: false
