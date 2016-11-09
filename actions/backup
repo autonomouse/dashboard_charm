@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import shutil
+import tarfile
+import tempfile
+from charmhelpers.core import hookenv
+sys.path.insert(0, os.path.join(os.environ['CHARM_DIR'], 'lib'))
+from charms.layer.weebl import utils
+
+hooks = hookenv.Hooks()
+output_dir = '/home/ubuntu/backup/'
+
+
+def save_database_dump(weebl_data, full_path):
+    hookenv.log("Saving dump of '{database}' database from {host}".format(
+        **weebl_data))
+    utils.save_database_dump(weebl_data, full_path)
+    hookenv.log("Database dump file saved to {}".format(full_path))
+
+
+def make_tarfile(tarball, dir_to_compress):
+    with tarfile.open(tarball, "w:gz") as tar:
+        tar.add(dir_to_compress, arcname="weebl_data")
+    hookenv.log("Tarball available at {}".format(tarball))
+    return tarball
+
+
+@hooks.hook("backup")
+def update():
+    """ Back-up current Weebl database. """
+    msg = "Backing up Weebl database and bundle images to tarball."
+    hookenv.log(msg)
+    hookenv.status_set('maintenance', msg)
+    now = utils.generate_timestamp()
+    utils.mkdir_p(output_dir)
+    filename = "database_backup_" + now + ".dump"
+    tarball_name = "weebl_backup_" + now + ".tar.gz"
+    tarball = os.path.join(output_dir, tarball_name)
+    weebl_data = utils.get_weebl_data()
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        destination = os.path.join(tmp_dir, "weebl_backup_" + now)
+        os.makedirs(destination, exist_ok=True)
+        save_database_dump(weebl_data, os.path.join(destination, filename))
+        utils.backup_testrun_svgs(destination)
+        output = make_tarfile(tarball, destination)
+    hookenv.action_set({
+        "output": output
+    })
+    hookenv.status_set('active', 'Ready')
+    return output
+
+
+if __name__ == "__main__":
+    hooks.execute(sys.argv)
