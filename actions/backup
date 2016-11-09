@@ -16,8 +16,8 @@ output_dir = '/home/ubuntu/backup/'
 def save_database_dump(weebl_data, full_path):
     hookenv.log("Saving dump of '{database}' database from {host}".format(
         **weebl_data))
-    utils.save_database_dump(weebl_data, full_path):
-    hookenv.log("Database dump file saved to {}".format(destination))
+    utils.save_database_dump(weebl_data, full_path)
+    hookenv.log("Database dump file saved to {}".format(full_path))
 
 
 def make_tarfile(tarball, dir_to_compress):
