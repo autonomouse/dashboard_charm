@@ -189,11 +189,11 @@ def save_database_dump(weebl_data, output_file):
     remote_db_cli_interaction("pg_dump", weebl_data, custom)
 
 
-def drop_database(database, weebl_data):
+def drop_database(weebl_data, database):
     remote_db_cli_interaction("dropdb", weebl_data, [database])
 
 
-def create_empty_database(database, weebl_data, postgres_user="postgres"):
+def create_empty_database(weebl_data, database, postgres_user="postgres"):
     create_cmds = [database, '-O', postgres_user]
     remote_db_cli_interaction("createdb", weebl_data, create_cmds)
 
