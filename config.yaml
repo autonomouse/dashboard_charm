@@ -32,9 +32,9 @@ options:
     default: None
     description: Random string of characters to enable API access.
   debug_mode:
-    type: boolean
+    type: string
     default: True
-    description: A boolean that turns on/off debug mode.
+    description: A string representation of a boolean that toggles debug mode.
   allowed_hosts:
     type: string
     default: '[]'
