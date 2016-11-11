@@ -34,9 +34,11 @@ def update():
     hookenv.log(msg)
     hookenv.status_set('maintenance', msg)
     now = utils.generate_timestamp()
+    weebl_version = utils.get_weebl_package_version()
     utils.mkdir_p(output_dir)
-    filename = "database_backup_" + now + ".dump"
-    tarball_name = "weebl_backup_" + now + ".tar.gz"
+    vers_tstamp = weebl_version + "_" + now
+    filename = "database_backup_" + vers_tstamp + ".dump"
+    tarball_name = "weebl_backup_" + vers_tstamp + ".tar.gz"
     tarball = os.path.join(output_dir, tarball_name)
     weebl_data = utils.get_weebl_data()
     with tempfile.TemporaryDirectory() as tmp_dir:

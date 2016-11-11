@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import apt
 import yaml
 import errno
 import shutil
@@ -23,9 +24,7 @@ from charmhelpers.core.templating import render
 os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
 WEEBL_YAML = '/etc/weebl/weebl.yaml'
 WEEBL_PKG = "python3-weebl"
-NON_WEEBL_DEB_PKGS = [
-    "postgresql-client",
-    "python3-psycopg2"]
+NON_WEEBL_DEB_PKGS = ["postgresql-client"]
 PIP_DIR = "./wheels/"
 NPM_DIR = "./npms/"
 JSLIBS_DIR = "/var/lib/weebl/static"
@@ -38,6 +37,19 @@ def mkdir_p(directory_name):
     except OSError as exc:
         if exc.errno != errno.EEXIST or not os.path.isdir(directory_name):
             raise exc
+
+def get_package_version(pkg):
+    try:
+        cache = apt.Cache()[pkg]
+        if not cache.is_installed:
+            return False
+        return cache.installed.version.split('~')[0]
+    except KeyError:
+        return False
+
+
+def get_weebl_package_version():
+    return get_package_version(WEEBL_PKG)
 
 
 def cmd_service(cmd, service):
@@ -82,7 +94,7 @@ def install_pip_deps():
 
 def setup_weebl_site(weebl_name):
     hookenv.log('Setting up weebl site...')
-    check_call(['django-admin', 'set_up_site', '"weebl_name"'])
+    check_call(['django-admin', 'set_up_site', '"' + weebl_name + '"'])
 
 
 def load_fixtures():
@@ -115,12 +127,12 @@ def get_weebl_data():
     return yaml.load(open(WEEBL_YAML).read())['database']
 
 
-def install_deb_from_ppa(weebl_pkg, config):
+def install_deb_from_ppa(pkg, config):
     hookenv.log('Adding ppa')
     ppa = config['ppa']
     ppa_key = config['ppa_key']
     add_source(ppa, ppa_key)
-    install_deb(weebl_pkg)
+    install_deb(pkg)
 
 
 def install_debs(weebl_pkg, config):
@@ -186,7 +198,7 @@ def remote_db_cli_interaction(app, weebl_data, custom=''):
 
 
 def save_database_dump(weebl_data, output_file):
-    custom = ['-f', 'output_file', '--no-owner', '--no-acl', '-x', '-F', 't',
+    custom = ['-f', output_file, '--no-owner', '--no-acl', '-x', '-F', 't',
               '-d', weebl_data['database']]
     remote_db_cli_interaction("pg_dump", weebl_data, custom)
 
@@ -201,6 +213,6 @@ def create_empty_database(weebl_data, database, postgres_user="postgres"):
 
 
 def upload_database_dump(weebl_data, dump_file):
-    restore_cmds = ['-d', weebl_data['database'], '--clean', '--exit-on-error',
-                    dump_file]
+    restore_cmds = ['-d', weebl_data['database'], '--exit-on-error',
+                    '--no-owner', dump_file]
     remote_db_cli_interaction("pg_restore", weebl_data, restore_cmds)

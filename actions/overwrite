@@ -5,6 +5,7 @@ import sys
 import shutil
 import tarfile
 import tempfile
+from subprocess import check_call
 from charmhelpers.core import hookenv
 sys.path.insert(0, os.path.join(os.environ['CHARM_DIR'], 'lib'))
 from charms.layer.weebl import utils
