@@ -33,5 +33,5 @@ options:
     description: Random string of characters to enable API access.
   debug_mode:
     type: string
-    default: True
+    default: "True"
     description: A string representation of a boolean that toggles debug mode.
