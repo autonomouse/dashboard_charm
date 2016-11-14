@@ -35,7 +35,3 @@ options:
     type: string
     default: True
     description: A string representation of a boolean that toggles debug mode.
-  allowed_hosts:
-    type: string
-    default: '[]'
-    description: A list of strings representing the host/domain names to serve.
