@@ -82,7 +82,6 @@ class Uploader():
     def build_charm(self):
         self.cmd('charm build -o {}'.format(self.working_dir))
         build_dir = os.path.join(self.working_dir, "builds/weebl/")
-        print(self.cmd('charm proof {}'.format(build_dir)))
         output = self.cmd('charm push {} {}'.format(build_dir, CHARMSTORE_LOC))
         self.charm = output.split('\n')[0].split(' ')[1]
         print("The {} charm has been built and is temporarily in {}".format(
