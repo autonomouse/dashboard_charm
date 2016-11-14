@@ -95,9 +95,8 @@ def install_pip_deps():
             'pip3', 'install', '-U', '--no-index', '-f', PIP_DIR, pip_path])
 
 
-def setup_weebl_site(config):
-    weebl_name = '"' + config['username'] + '"'
-    hookenv.log('Setting up weebl site...')
+def edit_weebl_settings(config):
+    hookenv.log('Editing weebl settings file...')
     with open(WEEBL_SETTINGS_PATH, 'w+') as weebl_settings_file:
         weebl_settings = weebl_settings_file.read()
         weebl_settings = re.sub(
@@ -109,8 +108,14 @@ def setup_weebl_site(config):
             '\nALLOWED_HOSTS = ' + unit_get('private-address') + '\n',
             weebl_settings)
         weebl_settings_file.write(weebl_settings)
-    cmd_service('start', 'weebl-gunicorn')
+    cmd_service('restart', 'weebl-gunicorn')
+
+
+def setup_weebl_site(config):
+    hookenv.log('Setting up weebl site...')
+    weebl_name = '"' + config['username'] + '"'
     check_call(['django-admin', 'set_up_site', weebl_name])
+
 
 def load_fixtures():
     hookenv.log('Loading fixtures...')
@@ -168,6 +173,7 @@ def install_weebl(config):
     setup_weebl_site(config)
     fix_bundle_dir_permissions()
     load_fixtures()
+    edit_weebl_settings(config)
     hookenv.status_set('active', 'Ready')
     set_state('weebl.ready')
 
