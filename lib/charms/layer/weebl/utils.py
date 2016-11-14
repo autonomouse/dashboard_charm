@@ -110,7 +110,7 @@ def setup_weebl_site(config):
             weebl_settings)
         weebl_settings_file.write(weebl_settings)
     cmd_service('start', 'weebl-gunicorn')
-    check_call(['django-admin', 'set_up_site', '"' + weebl_name + '"'])
+    check_call(['django-admin', 'set_up_site', weebl_name])
 
 def load_fixtures():
     hookenv.log('Loading fixtures...')
