@@ -20,6 +20,7 @@ from charmhelpers.fetch import (
     apt_install,
     )
 from charmhelpers.core.templating import render
+from charmhelpers.core.hookenv import unit_get
 
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
@@ -105,7 +106,7 @@ def setup_weebl_site(config):
             weebl_settings)
         weebl_settings = re.sub(
             '\nALLOWED_HOSTS = *\n',
-            '\nALLOWED_HOSTS = ' + config['allowed_hosts'] + '\n',
+            '\nALLOWED_HOSTS = ' + unit_get('private-address') + '\n',
             weebl_settings)
         weebl_settings_file.write(weebl_settings)
     cmd_service('start', 'weebl-gunicorn')
