@@ -105,7 +105,7 @@ def edit_weebl_settings(config):
             weebl_settings)
         weebl_settings = re.sub(
             '\nALLOWED_HOSTS = *\n',
-            '\nALLOWED_HOSTS = ' + unit_get('private-address') + '\n',
+            '\nALLOWED_HOSTS = ' + unit_get('public-address') + '\n',
             weebl_settings)
         weebl_settings_file.write(weebl_settings)
     cmd_service('restart', 'weebl-gunicorn')
