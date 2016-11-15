@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import re
 import apt
 import yaml
 import errno
@@ -19,10 +20,12 @@ from charmhelpers.fetch import (
     apt_install,
     )
 from charmhelpers.core.templating import render
+from charmhelpers.core.hookenv import unit_get
 
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
 WEEBL_YAML = '/etc/weebl/weebl.yaml'
+WEEBL_SETTINGS_PATH = "/usr/lib/python3/dist-packages/weebl/settings.py"
 WEEBL_PKG = "python3-weebl"
 NON_WEEBL_DEB_PKGS = ["postgresql-client"]
 PIP_DIR = "./wheels/"
@@ -37,6 +40,7 @@ def mkdir_p(directory_name):
     except OSError as exc:
         if exc.errno != errno.EEXIST or not os.path.isdir(directory_name):
             raise exc
+
 
 def get_package_version(pkg):
     try:
@@ -92,9 +96,37 @@ def install_pip_deps():
             'pip3', 'install', '-U', '--no-index', '-f', PIP_DIR, pip_path])
 
 
-def setup_weebl_site(weebl_name):
+def edit_weebl_settings(config):
+    debug = config['debug_mode']
+    address = unit_get('public-address')
+    msg = "Setting DEBUG to {} and ALLOWED_HOSTS to {} in {}".format(
+        debug, address, WEEBL_SETTINGS_PATH)
+    hookenv.log(msg)
+    hookenv.status_set('maintenance', msg)
+    if not os.path.isfile(WEEBL_SETTINGS_PATH):
+        err_msg = 'There is no settings file here!: {}'.format(
+            WEEBL_SETTINGS_PATH)
+        hookenv.log(err_msg)
+        raise Exception(err_msg)
+    with open(WEEBL_SETTINGS_PATH, 'w+') as weebl_settings_file:
+        weebl_settings = weebl_settings_file.read()
+        weebl_settings = re.sub(
+            '\nDEBUG = *\n',
+            '\nDEBUG = ' + debug + '\n',
+            weebl_settings)
+        weebl_settings = re.sub(
+            '\nALLOWED_HOSTS = *\n',
+            '\nALLOWED_HOSTS = ' + address + '\n',
+            weebl_settings)
+        weebl_settings_file.write(weebl_settings)
+    cmd_service('restart', 'weebl-gunicorn')
+    hookenv.status_set('active', 'Ready')
+
+
+def setup_weebl_site(config):
     hookenv.log('Setting up weebl site...')
-    check_call(['django-admin', 'set_up_site', '"' + weebl_name + '"'])
+    weebl_name = '"' + config['username'] + '"'
+    check_call(['django-admin', 'set_up_site', weebl_name])
 
 
 def load_fixtures():
@@ -150,7 +182,7 @@ def install_weebl(config):
     setup_weebl_gunicorn_service(config)
     cmd_service('start', 'weebl-gunicorn')
     cmd_service('restart', 'nginx')
-    setup_weebl_site(config['username'])
+    setup_weebl_site(config)
     fix_bundle_dir_permissions()
     load_fixtures()
     hookenv.status_set('active', 'Ready')

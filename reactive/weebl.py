@@ -77,3 +77,7 @@ def setup_database(pgsql):
         hookenv.status_set('maintenance', 'weebl is connecting to pgsql!')
         utils.render_config(pgsql)
         utils.install_weebl(config)
+
+'''@when('weebl.ready')
+def change_ip_and_debug_mode_in_settings(oildashboard):
+    utils.edit_weebl_settings(config)'''
