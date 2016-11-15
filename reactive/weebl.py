@@ -80,4 +80,5 @@ def setup_database(pgsql):
 
 @when('weebl.ready')
 def change_ip_and_debug_mode_in_settings():
-    utils.edit_weebl_settings(config)
+    hookenv.log("Changing debug mode and allowed hosts in settings.py")
+    utils.edit_weebl_settings(config['debug_mode'], unit_get('public-address'))
