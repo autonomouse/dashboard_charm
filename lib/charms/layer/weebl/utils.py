@@ -96,19 +96,30 @@ def install_pip_deps():
 
 
 def edit_weebl_settings(config):
-    hookenv.log('Editing weebl settings file...')
+    debug = config['debug_mode']
+    address = unit_get('public-address')
+    msg = "Setting DEBUG to {} and ALLOWED_HOSTS to {} in {}".format(
+        debug, address, WEEBL_SETTINGS_PATH)
+    hookenv.log(msg)
+    hookenv.status_set('maintenance', msg)
+    if not os.path.isfile(WEEBL_SETTINGS_PATH):
+        err_msg = 'There is no settings file here!: {}'.format(
+            WEEBL_SETTINGS_PATH))
+        hookenv.log(err_msg)
+        raise Exception(err_msg)
     with open(WEEBL_SETTINGS_PATH, 'w+') as weebl_settings_file:
         weebl_settings = weebl_settings_file.read()
         weebl_settings = re.sub(
             '\nDEBUG = *\n',
-            '\nDEBUG = ' + config['debug_mode'] + '\n',
+            '\nDEBUG = ' + debug + '\n',
             weebl_settings)
         weebl_settings = re.sub(
             '\nALLOWED_HOSTS = *\n',
-            '\nALLOWED_HOSTS = ' + unit_get('public-address') + '\n',
+            '\nALLOWED_HOSTS = ' + address + '\n',
             weebl_settings)
         weebl_settings_file.write(weebl_settings)
     cmd_service('restart', 'weebl-gunicorn')
+    hookenv.status_set('active', 'Ready')
 
 
 def setup_weebl_site(config):
@@ -173,7 +184,6 @@ def install_weebl(config):
     setup_weebl_site(config)
     fix_bundle_dir_permissions()
     load_fixtures()
-    edit_weebl_settings(config)
     hookenv.status_set('active', 'Ready')
     set_state('weebl.ready')
 
