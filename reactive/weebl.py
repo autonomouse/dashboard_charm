@@ -78,6 +78,6 @@ def setup_database(pgsql):
         utils.render_config(pgsql)
         utils.install_weebl(config)
 
-'''@when('weebl.ready')
+@when('weebl.ready')
 def change_ip_and_debug_mode_in_settings(oildashboard):
-    utils.edit_weebl_settings(config)'''
+    utils.edit_weebl_settings(config)
