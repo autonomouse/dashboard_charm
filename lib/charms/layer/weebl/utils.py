@@ -20,7 +20,6 @@ from charmhelpers.fetch import (
     apt_install,
     )
 from charmhelpers.core.templating import render
-from charmhelpers.core.hookenv import unit_get
 
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
