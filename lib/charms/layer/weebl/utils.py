@@ -41,6 +41,7 @@ def mkdir_p(directory_name):
         if exc.errno != errno.EEXIST or not os.path.isdir(directory_name):
             raise exc
 
+
 def get_package_version(pkg):
     try:
         cache = apt.Cache()[pkg]
@@ -104,7 +105,7 @@ def edit_weebl_settings(config):
     hookenv.status_set('maintenance', msg)
     if not os.path.isfile(WEEBL_SETTINGS_PATH):
         err_msg = 'There is no settings file here!: {}'.format(
-            WEEBL_SETTINGS_PATH))
+            WEEBL_SETTINGS_PATH)
         hookenv.log(err_msg)
         raise Exception(err_msg)
     with open(WEEBL_SETTINGS_PATH, 'w+') as weebl_settings_file:
