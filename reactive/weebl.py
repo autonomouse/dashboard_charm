@@ -78,7 +78,7 @@ def setup_database(pgsql):
         utils.render_config(pgsql)
         utils.install_weebl(config)
 
-@when('weebl.ready')
+@when('oildashboard.available')
 def change_ip_and_debug_mode_in_settings():
     hookenv.log("Changing debug mode and allowed hosts in settings.py")
     utils.edit_weebl_settings(
