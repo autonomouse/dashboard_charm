@@ -65,18 +65,9 @@ def migrate_db():
     check_call(shlex.split(command))
 
 
-def change_ip_and_debug_mode_in_settings():
-    hookenv.log("Changing debug mode and allowed hosts in settings.py")
-    utils.edit_weebl_settings(
-        config['debug_mode'], hookenv.unit_get('public-address'))
-
-
 @when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
     utils.install_weebl(config)
-    hookenv.log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\ngo")
-    change_ip_and_debug_mode_in_settings()
-    hookenv.log("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\ndone")
 
 
 @when('database.master.available', 'nginx.available')
