@@ -111,6 +111,10 @@ def edit_settings(debug_mode, public_address):
             "\nDEBUG = " + debug_mode + "\n",
             weebl_settings)
         weebl_settings = re.sub(
+            "\nTEMPLATE_DEBUG = .*\n",
+            "\nTEMPLATE_DEBUG = " + debug_mode + "\n",
+            weebl_settings)
+        weebl_settings = re.sub(
             "\nALLOWED_HOSTS = .*\n",
             "\nALLOWED_HOSTS = ['127.0.0.1', '" + public_address + "']\n",
             weebl_settings)
@@ -181,7 +185,9 @@ def install_weebl(config):
     setup_weebl_site(config)
     fix_bundle_dir_permissions()
     load_fixtures()
-    edit_settings(config['debug_mode'], hookenv.unit_get('public-address'))
+    edit_settings(config['debug_mode'], '*')
+    # FIXME: Change this from '*' to hookenv.unit_get('public-address') once
+    # we are using the nginx layer correctly.
     hookenv.status_set('active', 'Ready')
     set_state('weebl.ready')
 
