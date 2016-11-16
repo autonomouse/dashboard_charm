@@ -112,7 +112,7 @@ def edit_settings(debug_mode, public_address):
             weebl_settings)
         weebl_settings = re.sub(
             "\nALLOWED_HOSTS = .*\n",
-            "\nALLOWED_HOSTS = ['" + public_address + "']\n",
+            "\nALLOWED_HOSTS = ['127.0.0.1', '" + public_address + "']\n",
             weebl_settings)
     with open(WEEBL_SETTINGS_PATH, 'w') as weebl_settings_file:
         weebl_settings_file.write(weebl_settings)
@@ -122,7 +122,7 @@ def edit_settings(debug_mode, public_address):
 
 def setup_weebl_site(config):
     hookenv.log('Setting up weebl site...')
-    weebl_name = '"' + config['username'] + '"'
+    weebl_name = '"' + config['weebl_name'] + '"'
     check_call(['django-admin', 'set_up_site', weebl_name])
 
 
