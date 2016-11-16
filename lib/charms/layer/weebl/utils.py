@@ -104,17 +104,17 @@ def edit_weebl_settings(debug_mode, public_address):
             WEEBL_SETTINGS_PATH)
         hookenv.log(err_msg)
         raise Exception(err_msg)
-    with open(WEEBL_SETTINGS_PATH, 'r') as weebl_settings_file:
+    with open(WEEBL_SETTINGS_PATH, 'w+') as weebl_settings_file:
         weebl_settings = weebl_settings_file.read()
         weebl_settings = re.sub(
-            '\nDEBUG = *\n',
+            '\nDEBUG = .*\n',
             '\nDEBUG = ' + debug_mode + '\n',
             weebl_settings)
         weebl_settings = re.sub(
-            '\nALLOWED_HOSTS = *\n',
+            '\nALLOWED_HOSTS = .*\n',
             '\nALLOWED_HOSTS = ' + public_address + '\n',
             weebl_settings)
-    with open(WEEBL_SETTINGS_PATH, 'w') as weebl_settings_file:
+        import pdb; pdb.set_trace()
         weebl_settings_file.write(weebl_settings)
     cmd_service('restart', 'weebl-gunicorn')
     hookenv.status_set('active', 'Ready')
