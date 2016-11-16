@@ -107,12 +107,12 @@ def edit_settings(debug_mode, public_address):
     with open(WEEBL_SETTINGS_PATH, 'r+') as weebl_settings_file:
         weebl_settings = weebl_settings_file.read()
         weebl_settings = re.sub(
-            '\nDEBUG = .*\n',
-            '\nDEBUG = ' + debug_mode + '\n',
+            "\nDEBUG = .*\n",
+            "\nDEBUG = " + debug_mode + "\n",
             weebl_settings)
         weebl_settings = re.sub(
-            '\nALLOWED_HOSTS = .*\n',
-            '\nALLOWED_HOSTS = [' + public_address + ']\n',
+            "\nALLOWED_HOSTS = .*\n",
+            "\nALLOWED_HOSTS = ['" + public_address + "']\n",
             weebl_settings)
         weebl_settings_file.write(weebl_settings)
     cmd_service('restart', 'weebl-gunicorn')
