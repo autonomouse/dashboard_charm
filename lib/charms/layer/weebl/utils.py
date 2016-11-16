@@ -95,10 +95,10 @@ def install_pip_deps():
             'pip3', 'install', '-U', '--no-index', '-f', PIP_DIR, pip_path])
 
 
-def edit_settings(debug_mode, public_address):
+def edit_settings(debug_mode):
     hookenv.status_set(
-        'maintenance', "Setting DEBUG to {} and ALLOWED_HOSTS to {} in {}"
-        .format(debug_mode, public_address, WEEBL_SETTINGS_PATH))
+        'maintenance', "Setting DEBUG to {} in {}"
+        .format(debug_mode, WEEBL_SETTINGS_PATH))
     if not os.path.isfile(WEEBL_SETTINGS_PATH):
         err_msg = 'There is no settings file here!: {}'.format(
             WEEBL_SETTINGS_PATH)
@@ -111,8 +111,8 @@ def edit_settings(debug_mode, public_address):
             "\nDEBUG = " + debug_mode + "\n",
             weebl_settings)
         weebl_settings = re.sub(
-            "\nALLOWED_HOSTS = .*\n",
-            "\nALLOWED_HOSTS = ['127.0.0.1', '" + public_address + "']\n",
+            "\nTEMPLATE_DEBUG = .*\n",
+            "\nTEMPLATE_DEBUG = " + debug_mode + "\n",
             weebl_settings)
     with open(WEEBL_SETTINGS_PATH, 'w') as weebl_settings_file:
         weebl_settings_file.write(weebl_settings)
@@ -181,7 +181,7 @@ def install_weebl(config):
     setup_weebl_site(config)
     fix_bundle_dir_permissions()
     load_fixtures()
-    edit_settings(config['debug_mode'], hookenv.unit_get('public-address'))
+    edit_settings(config['debug_mode'])
     hookenv.status_set('active', 'Ready')
     set_state('weebl.ready')
 
