@@ -75,9 +75,14 @@ def get_or_generate_apikey(apikey):
 
 
 def install_npm_deps():
+    npm_list = os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "npms.yaml")
     hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
-    for npm_path in glob(os.path.join(NPM_DIR, '*')):
+    with open(npm_list, 'r') as f:
+        npms = yaml.load(f.read())
+    for npm in npms:
+        npm_path = os.path.join(NPM_DIR, npm.replace('@', '-'))
         msg = "Installing {} via npm".format(npm_path)
         hookenv.status_set('maintenance', msg)
         hookenv.log(msg)
