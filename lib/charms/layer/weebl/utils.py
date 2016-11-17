@@ -75,8 +75,7 @@ def get_or_generate_apikey(apikey):
 
 
 def install_npm_deps():
-    npm_list = os.path.join(
-        os.path.abspath(os.path.dirname(__file__)), "npms.yaml")
+    npm_list = os.path.join(NPM_DIR, "npms.yaml")
     hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
     with open(npm_list, 'r') as f:
@@ -91,13 +90,15 @@ def install_npm_deps():
 
 
 def install_pip_deps():
+    pip_list = os.path.join(PIP_DIR, "wheels.yaml")
     hookenv.log('Installing pip packages...')
-    for pip_path in glob(os.path.join(PIP_DIR, '*')):
-        msg = "Installing {} via pip".format(pip_path)
+    with open(pip_list, 'r') as f:
+        pips = yaml.load(f.read())
+    for pip in pips:
+        msg = "Installing {} via pip".format(pip)
         hookenv.status_set('maintenance', msg)
         hookenv.log(msg)
-        check_call([
-            'pip3', 'install', '-U', '--no-index', '-f', PIP_DIR, pip_path])
+        check_call(['pip3', 'install', '-U', '--no-index', '-f', PIP_DIR, pip])
 
 
 def edit_settings(debug_mode):

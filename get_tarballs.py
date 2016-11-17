@@ -13,13 +13,8 @@ TARBALL_GEN_DEB_PKGS = [
     "libffi-dev",
     "npm"]
 
-def get_pip_pkgs(pip_list="./lib/charms/layer/weebl/wheels.yaml"):
-    with open(pip_list, 'r') as f:
-        return yaml.load(f.read())
-
-
-def get_npm_pkgs(npm_list="./lib/charms/layer/weebl/npms.yaml"):
-    with open(npm_list, 'r') as f:
+def get_pkgs_from_list(pkg_list):
+    with open(pkg_list, 'r') as f:
         return yaml.load(f.read())
 
 
@@ -65,12 +60,12 @@ def generate_local_pkgs(directory, pkgs, cmd):
 
 
 def generate_pip_wheels():
-    pip_pkgs = get_pip_pkgs()
+    pip_pkgs = get_pkgs_from_list("./wheels/wheels.yaml")
     generate_local_pkgs("./wheels/", pip_pkgs, "pip3 wheel {}")
 
 
 def generate_npm_packs():
-    npm_pkgs = get_npm_pkgs()
+    npm_pkgs = get_pkgs_from_list("./npms/npms.yaml")
     generate_local_pkgs("./npms/", npm_pkgs, "npm pack {}")
 
 
