@@ -26,7 +26,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
 WEEBL_YAML = '/etc/weebl/weebl.yaml'
 WEEBL_SETTINGS_PATH = "/usr/lib/python3/dist-packages/weebl/settings.py"
 WEEBL_PKG = "python3-weebl"
-NON_WEEBL_DEB_PKGS = ["postgresql-client"]
+NON_WEEBL_DEB_PKGS = ["postgresql-client", "npm", "python3-pip"]
 PIP_DIR = "./wheels/"
 NPM_DIR = "./npms/"
 JSLIBS_DIR = "/var/lib/weebl/static"
@@ -165,10 +165,10 @@ def install_deb_from_ppa(pkg, config):
 
 def install_debs(weebl_pkg, config):
     hookenv.status_set('maintenance', 'Installing Weebl package')
-    install_deb_from_ppa(weebl_pkg, config)
     for deb_pkg in NON_WEEBL_DEB_PKGS:
         hookenv.status_set('maintenance', 'Installing ' + deb_pkg + ' package')
         install_deb(deb_pkg)
+    install_deb_from_ppa(weebl_pkg, config)
 
 
 def install_weebl(config):
