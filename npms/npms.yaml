@@ -1,4 +1,6 @@
-- network
+- async@2.1.2
+- wmic@0.2.0
+- network@0.3.0
 - d3@3.5.17
 - nvd3@1.8.3
 - angular@1.5.8
