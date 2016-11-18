@@ -76,16 +76,22 @@ def get_or_generate_apikey(apikey):
 def install_npm_deps():
     hookenv.log('Installing npm packages...')
     mkdir_p(JSLIBS_DIR)
-    with open(os.path.join(NPM_DIR, "npms.yaml"), 'r') as f:
-        npms = yaml.load(f.read())
-    for npm in npms:
-        npm_path = os.path.join(NPM_DIR, npm.replace('@', '-'))
-        msg = "Installing {} via npm".format(npm_path)
-        hookenv.status_set('maintenance', msg)
-        hookenv.log(msg)
-        command = ["npm", "install", "--prefix", JSLIBS_DIR, npm_path + ".tgz",
-                   "--no-optional"]
-        check_call(command)
+    original_dir = os.getcwd()
+    full_path_to_npms = os.path.abspath(NPM_DIR)
+    try:
+        os.chdir(JSLIBS_DIR)
+        with open(os.path.join(full_path_to_npms, "npms.yaml"), 'r') as f:
+            npms = yaml.load(f.read())
+        for npm in npms:
+            npm_path = os.path.join(full_path_to_npms, npm.replace('@', '-'))
+            msg = "Installing {} via npm".format(npm_path)
+            hookenv.status_set('maintenance', msg)
+            hookenv.log(msg)
+            command = ["npm", "install", npm_path + ".tgz", "--no-optional"]
+            check_call(command)
+    finally:
+        os.chdir(original_dir)
+
 
 
 def install_pip_deps():
