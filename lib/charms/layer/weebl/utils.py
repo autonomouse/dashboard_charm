@@ -83,7 +83,7 @@ def install_npm_deps():
         msg = "Installing {} via npm".format(npm_path)
         hookenv.status_set('maintenance', msg)
         hookenv.log(msg)
-        command = ['npm', 'install', '--prefix', JSLIBS_DIR, npm_path + ".tgz",
+        command = ["npm", "install", "--prefix", JSLIBS_DIR, npm_path + ".tgz",
                    "--no-optional"]
         check_call(command)
 
