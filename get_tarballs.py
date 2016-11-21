@@ -70,16 +70,33 @@ def generate_pip_wheels():
     generate_local_pkgs("./wheels/", pip_pkgs, "pip3 wheel {}", yaml_file)
 
 
-def generate_npm_packs():
-    yaml_file = "./npms/npms.yaml"
+def generate_npm_pkgs():
+    npm_dir = "./npms/"
+    yaml_file = os.path.join(npm_dir, "npms.yaml")
     npm_pkgs = get_pkgs_from_list(yaml_file)
-    generate_local_pkgs("./npms/", npm_pkgs, "npm pack {}", yaml_file)
+    generate_local_pkgs(npm_dir, npm_pkgs, "npm pack {}", yaml_file)
+    shrinkwrap(npm_dir)
+
+
+def shrinkwrap(directory):
+    original_wd = os.getcwd()
+    path = os.path.abspath(directory)
+    tgzs = [tgz for tgz in next(os.walk(path))[2] if tgz.endswith('tgz')]
+    try:
+        os.chdir(path)
+        for tgz in tgzs:
+            check_call(["npm", "install", "--prefix", ".", tgz])
+        check_call(["npm", "shrinkwrap"])
+    finally:
+        shutil.rmtree(os.path.join(path, "node_modules"))
+        shutil.rmtree(os.path.join(path, "etc"))
+        os.chdir(original_wd)
 
 
 def main():
     update_debs_if_necessary()
     generate_pip_wheels()
-    generate_npm_packs()
+    generate_npm_pkgs()
 
 
 if __name__ == '__main__':
