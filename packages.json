@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "angular": {
+      "version": "1.5.8",
+      "from": "angular-1.5.8.tgz",
+      "resolved": "file:angular-1.5.8.tgz"
+    },
+    "angular-nvd3": {
+      "version": "1.0.7",
+      "from": "angular-nvd3-1.0.7.tgz",
+      "resolved": "file:angular-nvd3-1.0.7.tgz"
+    },
+    "d3": {
+      "version": "3.5.17",
+      "from": "d3-3.5.17.tgz",
+      "resolved": "file:d3-3.5.17.tgz"
+    },
+    "nvd3": {
+      "version": "1.8.3",
+      "from": "nvd3-1.8.3.tgz",
+      "resolved": "file:nvd3-1.8.3.tgz"
+    }
+  }
+}
