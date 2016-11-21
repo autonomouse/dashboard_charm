@@ -75,23 +75,17 @@ def get_or_generate_apikey(apikey):
 
 def install_npm_deps():
     hookenv.log('Installing npm packages...')
-    mkdir_p(JSLIBS_DIR)
+    node_modules_dir = os.path.join(JSLIBS_DIR, "node_modules")
+    shutil.rmtree(node_modules_dir)
+    mkdir_p(node_modules_dir)
     original_dir = os.getcwd()
     full_path_to_npms = os.path.abspath(NPM_DIR)
     try:
-        os.chdir(JSLIBS_DIR)
-        with open(os.path.join(full_path_to_npms, "npms.yaml"), 'r') as f:
-            npms = yaml.load(f.read())
-        for npm in npms:
-            npm_path = os.path.join(full_path_to_npms, npm.replace('@', '-'))
-            msg = "Installing {} via npm".format(npm_path)
-            hookenv.status_set('maintenance', msg)
-            hookenv.log(msg)
-            command = ["npm", "install", npm_path + ".tgz", "--no-optional"]
-            check_call(command)
+        os.chdir(full_path_to_npms)
+        check_call(["npm", "install"])
+        copy_tree("node_modules", node_modules_dir)
     finally:
         os.chdir(original_dir)
-
 
 
 def install_pip_deps():
