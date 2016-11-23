@@ -76,9 +76,8 @@ def get_or_generate_apikey(apikey):
 def install_npm_deps():
     hookenv.log('Installing npm packages...')
     node_modules_dir = os.path.join(JSLIBS_DIR, "node_modules")
-    if os.path.exists(node_modules_dir):
-        shutil.rmtree(node_modules_dir)
-    mkdir_p(node_modules_dir)
+    if not os.path.exists(node_modules_dir):
+        mkdir_p(node_modules_dir)
     original_dir = os.getcwd()
     full_path_to_npms = os.path.abspath(NPM_DIR)
     try:
