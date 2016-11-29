@@ -56,8 +56,7 @@ def generate_local_pkgs(directory, pkgs, cmd_list, yaml_file):
         try:
             os.chdir(path)
             for pkg in pkgs:
-                cmd_list.append(pkg)
-            check_call(cmd_list)
+                check_call(cmd_list + [pkg])
         finally:
             os.chdir(original_wd)
             shutil.move(os.path.join(
