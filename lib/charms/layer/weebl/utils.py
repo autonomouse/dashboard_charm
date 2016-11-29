@@ -6,7 +6,6 @@ import apt
 import yaml
 import errno
 import shutil
-from glob import glob
 from random import choice
 from string import hexdigits
 from datetime import datetime
@@ -76,23 +75,28 @@ def get_or_generate_apikey(apikey):
 
 def install_npm_deps():
     hookenv.log('Installing npm packages...')
-    mkdir_p(JSLIBS_DIR)
-    for npm_path in glob(os.path.join(NPM_DIR, '*')):
-        msg = "Installing {} via npm".format(npm_path)
-        hookenv.status_set('maintenance', msg)
-        hookenv.log(msg)
-        command = ['npm', 'install', '--prefix', JSLIBS_DIR, npm_path]
-        check_call(command)
+    node_modules_dir = os.path.join(JSLIBS_DIR, "node_modules")
+    if not os.path.exists(node_modules_dir):
+        mkdir_p(node_modules_dir)
+    original_dir = os.getcwd()
+    full_path_to_npms = os.path.abspath(NPM_DIR)
+    try:
+        os.chdir(full_path_to_npms)
+        check_call(["npm", "install"])
+        copy_tree("node_modules", node_modules_dir)
+    finally:
+        os.chdir(original_dir)
 
 
 def install_pip_deps():
     hookenv.log('Installing pip packages...')
-    for pip_path in glob(os.path.join(PIP_DIR, '*')):
-        msg = "Installing {} via pip".format(pip_path)
+    with open(os.path.join(PIP_DIR, "wheels.yaml"), 'r') as f:
+        pips = yaml.load(f.read())
+    for pip in pips:
+        msg = "Installing {} via pip".format(pip)
         hookenv.status_set('maintenance', msg)
         hookenv.log(msg)
-        check_call([
-            'pip3', 'install', '-U', '--no-index', '-f', PIP_DIR, pip_path])
+        check_call(['pip3', 'install', '-U', '--no-index', '-f', PIP_DIR, pip])
 
 
 def edit_settings(debug_mode):

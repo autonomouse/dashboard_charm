@@ -1,0 +1,44 @@
+{
+  "dependencies": {
+    "angular": {
+      "version": "1.5.8",
+      "from": "angular-1.5.8.tgz",
+      "resolved": "file:angular-1.5.8.tgz"
+    },
+    "angular-cookies": {
+      "version": "1.5.8",
+      "from": "angular-cookies-1.5.8.tgz",
+      "resolved": "file:angular-cookies-1.5.8.tgz"
+    },
+    "angular-nvd3": {
+      "version": "1.0.7",
+      "from": "angular-nvd3-1.0.7.tgz",
+      "resolved": "file:angular-nvd3-1.0.7.tgz"
+    },
+    "angular-resource": {
+      "version": "1.5.8",
+      "from": "angular-resource-1.5.8.tgz",
+      "resolved": "file:angular-resource-1.5.8.tgz"
+    },
+    "angular-route": {
+      "version": "1.5.8",
+      "from": "angular-route-1.5.8.tgz",
+      "resolved": "file:angular-route-1.5.8.tgz"
+    },
+    "d3": {
+      "version": "3.5.17",
+      "from": "d3-3.5.17.tgz",
+      "resolved": "file:d3-3.5.17.tgz"
+    },
+    "jquery": {
+      "version": "3.1.1",
+      "from": "jquery-3.1.1.tgz",
+      "resolved": "file:jquery-3.1.1.tgz"
+    },
+    "nvd3": {
+      "version": "1.8.3",
+      "from": "nvd3-1.8.3.tgz",
+      "resolved": "file:nvd3-1.8.3.tgz"
+    }
+  }
+}

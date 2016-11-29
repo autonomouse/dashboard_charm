@@ -3,7 +3,9 @@
 import os
 import sys
 import apt
+import yaml
 import shutil
+import tempfile
 from subprocess import check_call
 from apt.cache import LockFailedException
 
@@ -11,12 +13,11 @@ from apt.cache import LockFailedException
 TARBALL_GEN_DEB_PKGS = [
     "libffi-dev",
     "npm"]
-NPM_PKGS = [
-    "angular@1.5.8",
-    "d3@3.5.17",
-    "nvd3@1.8.3",
-    "angular-nvd3@1.0.7"]
-PIP_PKGS = ["WeasyPrint"]
+
+
+def get_pkgs_from_list(pkg_list):
+    with open(pkg_list, 'r') as f:
+        return yaml.load(f.read())
 
 
 def install_debs(requires_installation, cache):
@@ -25,7 +26,6 @@ def install_debs(requires_installation, cache):
         cache.open()
     except LockFailedException:
         sys.exit("\nPlease run again as sudo\n")
-
     for pkg_name in requires_installation:
         pkg = cache[pkg_name]
         pkg.mark_install()
@@ -43,35 +43,59 @@ def update_debs_if_necessary():
         install_debs(requires_installation, cache)
 
 
-def generate_local_pkgs(directory, pkgs, cmd):
+def generate_local_pkgs(directory, pkgs, cmd_list, yaml_file):
     original_wd = os.getcwd()
     path = os.path.abspath(directory)
-    try:
-        shutil.rmtree(path)
-    except FileNotFoundError:
-        pass
-    os.mkdir(path)
-    try:
-        os.chdir(path)
-        for pkg in pkgs:
-            check_call(cmd.format(pkg), shell=True)
-    finally:
-        os.chdir(original_wd)
-        recursive_chown_from_root(path)
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            shutil.move(yaml_file, tmp)
+            shutil.rmtree(path)
+        except FileNotFoundError:
+            pass
+        os.mkdir(path)
+        try:
+            os.chdir(path)
+            for pkg in pkgs:
+                check_call(cmd_list + [pkg])
+        finally:
+            os.chdir(original_wd)
+            shutil.move(os.path.join(
+                tmp, os.path.basename(yaml_file)), os.path.dirname(yaml_file))
 
 
 def generate_pip_wheels():
-    generate_local_pkgs("./wheels/", PIP_PKGS, "pip3 wheel {}")
+    yaml_file = "./wheels/wheels.yaml"
+    pip_pkgs = get_pkgs_from_list(yaml_file)
+    generate_local_pkgs("./wheels/", pip_pkgs, ["pip3", "wheel"], yaml_file)
 
 
-def generate_npm_packs():
-    generate_local_pkgs("./npms/", NPM_PKGS, "npm pack {}")
+def generate_npm_pkgs():
+    npm_dir = "./npms/"
+    yaml_file = os.path.join(npm_dir, "npms.yaml")
+    npm_pkgs = get_pkgs_from_list(yaml_file)
+    generate_local_pkgs(npm_dir, npm_pkgs, ["npm", "pack"], yaml_file)
+    shrinkwrap(npm_dir)
+
+
+def shrinkwrap(directory):
+    original_wd = os.getcwd()
+    path = os.path.abspath(directory)
+    tgzs = [tgz for tgz in next(os.walk(path))[2] if tgz.endswith('tgz')]
+    try:
+        os.chdir(path)
+        for tgz in tgzs:
+            check_call(["npm", "install", "--prefix", ".", tgz])
+        check_call(["npm", "shrinkwrap"])
+    finally:
+        shutil.rmtree(os.path.join(path, "node_modules"))
+        shutil.rmtree(os.path.join(path, "etc"))
+        os.chdir(original_wd)
 
 
 def main():
     update_debs_if_necessary()
     generate_pip_wheels()
-    generate_npm_packs()
+    generate_npm_pkgs()
 
 
 if __name__ == '__main__':
