@@ -43,7 +43,7 @@ def update_debs_if_necessary():
         install_debs(requires_installation, cache)
 
 
-def generate_local_pkgs(directory, pkgs, cmd, yaml_file):
+def generate_local_pkgs(directory, pkgs, cmd_list, yaml_file):
     original_wd = os.getcwd()
     path = os.path.abspath(directory)
     with tempfile.TemporaryDirectory() as tmp:
@@ -56,25 +56,25 @@ def generate_local_pkgs(directory, pkgs, cmd, yaml_file):
         try:
             os.chdir(path)
             for pkg in pkgs:
-                check_call(cmd.format(pkg), shell=True)
+                cmd_list.append(pkg)
+            check_call(cmd_list)
         finally:
             os.chdir(original_wd)
             shutil.move(os.path.join(
                 tmp, os.path.basename(yaml_file)), os.path.dirname(yaml_file))
-            shutil.chown(path=path, user=os.environ.get('USER'))
 
 
 def generate_pip_wheels():
     yaml_file = "./wheels/wheels.yaml"
     pip_pkgs = get_pkgs_from_list(yaml_file)
-    generate_local_pkgs("./wheels/", pip_pkgs, "pip3 wheel {}", yaml_file)
+    generate_local_pkgs("./wheels/", pip_pkgs, ["pip3", "wheel"], yaml_file)
 
 
 def generate_npm_pkgs():
     npm_dir = "./npms/"
     yaml_file = os.path.join(npm_dir, "npms.yaml")
     npm_pkgs = get_pkgs_from_list(yaml_file)
-    generate_local_pkgs(npm_dir, npm_pkgs, "npm pack {}", yaml_file)
+    generate_local_pkgs(npm_dir, npm_pkgs, ["npm", "pack"], yaml_file)
     shrinkwrap(npm_dir)
 
 
