@@ -68,7 +68,6 @@ def migrate_db():
 @when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
     utils.install_weebl(config)
-    hookenv.open_port(80)
 
 
 @when('database.master.available', 'nginx.available')

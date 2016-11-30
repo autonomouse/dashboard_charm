@@ -186,6 +186,7 @@ def install_weebl(config):
     fix_bundle_dir_permissions()
     load_fixtures()
     edit_settings(config['debug_mode'])
+    hookenv.open_port(80)
     hookenv.status_set('active', 'Ready')
     set_state('weebl.ready')
 
