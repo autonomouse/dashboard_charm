@@ -28,7 +28,6 @@ def restore_from_tarball(tarball, weebl_data):
         os.chdir(tmp_dir)
         with tarfile.open(tarball, "r:gz") as tar:
             tar.extractall()
-            tar.close()
         utils.add_testrun_svgs_to_bundles_dir(tmp_dir)
         restore_database_from_dump(tmp_dir, weebl_data)
 
