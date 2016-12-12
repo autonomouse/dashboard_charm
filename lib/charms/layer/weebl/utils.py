@@ -250,3 +250,16 @@ def upload_database_dump(weebl_data, dump_file):
     restore_cmds = ['-d', weebl_data['database'], '--exit-on-error',
                     '--no-owner', dump_file]
     remote_db_cli_interaction("pg_restore", weebl_data, restore_cmds)
+
+
+def create_default_user(username, email, uid, apikey, provider="ubuntu"):
+    hookenv.log('Setting up {} as the default user...'.format(username))
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
+    try:
+        check_call(["django-admin", "preseed_default_superuser", username,
+                    email, provider, uid, apikey])
+    except CalledProcessError:
+        err_msg = "Error setting up default weebl user ({})".format(username)
+        hookenv.log(err_msg)
+        hookenv.status_set('maintenance', err_msg)
+        raise Exception(err_msg)

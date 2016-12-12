@@ -12,6 +12,7 @@ from charms.layer.weebl import utils
 
 
 hooks = hookenv.Hooks()
+config = hookenv.config()
 
 
 def restore_database_from_dump(directory, weebl_data):
@@ -46,6 +47,8 @@ def main(tarball):
         utils.drop_database(weebl_data, weebl_data['database'])
         utils.create_empty_database(weebl_data, weebl_data['database'])
         restore_from_tarball(tarball, weebl_data)
+        utils.create_default_user(config['username'], config['email'],
+                                  config['uid'], config['_apikey'])
         status_msg = 'Ready'
         status = 'active'
         outcome_msg = 'Database successfully overwritten with {}'.format(

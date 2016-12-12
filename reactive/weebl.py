@@ -19,22 +19,6 @@ def request_db(pgsql):
         pgsql.set_roles('weebl')
 
 
-def create_default_user(username, email, uid, apikey):
-    provider = "ubuntu"
-    hookenv.log('Setting up {} as the default user...'.format(username))
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    command = "django-admin preseed_default_superuser "
-    command += "\"{0}\" \"{1}\" \"{2}\" \"{3}\" \"{4}\"".format(
-        username, email, provider, uid, apikey)
-    try:
-        check_call(shlex.split(command))
-    except CalledProcessError:
-        err_msg = "Error setting up default weebl user ({})".format(username)
-        hookenv.log(err_msg)
-        hookenv.status_set('maintenance', err_msg)
-        raise Exception(err_msg)
-
-
 @when('database.master.available', 'nginx.available', 'weebl.ready')
 def set_default_credentials(*args, **kwargs):
     if '_apikey' in config:
@@ -44,7 +28,7 @@ def set_default_credentials(*args, **kwargs):
     apikey = utils.get_or_generate_apikey(config.get('apikey'))
     if 'uid' not in config and 'email' in config:
         config['uid'] = config['email'].split('@')[0]
-    create_default_user(
+    utils.create_default_user(
         config['username'], config['email'], config['uid'], apikey)
     config['_apikey'] = apikey
     set_state('credentials.available')
