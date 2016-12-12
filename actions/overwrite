@@ -33,7 +33,7 @@ def restore_from_tarball(tarball, weebl_data):
         restore_database_from_dump(tmp_dir, weebl_data)
 
 
-def main(tarball, apikey):
+def main(tarball):
     status_msg = 'Overwriting database with {}'.format(tarball)
     status = 'maintenance'
     hookenv.status_set(status, status_msg)
@@ -47,8 +47,8 @@ def main(tarball, apikey):
         utils.drop_database(weebl_data, weebl_data['database'])
         utils.create_empty_database(weebl_data, weebl_data['database'])
         restore_from_tarball(tarball, weebl_data)
-        utils.create_default_user(
-            config['username'], config['email'], config['uid'], apikey)
+        utils.create_default_user(config['username'], config['email'],
+                                  config['uid'], config['_apikey'])
         status_msg = 'Ready'
         status = 'active'
         outcome_msg = 'Database successfully overwritten with {}'.format(
@@ -63,7 +63,7 @@ def main(tarball, apikey):
 @hooks.hook("overwrite")
 def update():
     """ Overwrite existing Weebl database. """
-    main(hookenv.action_get("tarball"), hookenv.action_get("apikey"))
+    main(hookenv.action_get("tarball"))
 
 
 if __name__ == "__main__":
