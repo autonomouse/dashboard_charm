@@ -12,6 +12,7 @@ from charms.layer.weebl import utils
 
 
 hooks = hookenv.Hooks()
+config = hookenv.config()
 
 
 def restore_database_from_dump(directory, weebl_data):
@@ -32,7 +33,7 @@ def restore_from_tarball(tarball, weebl_data):
         restore_database_from_dump(tmp_dir, weebl_data)
 
 
-def main(tarball):
+def main(tarball, apikey):
     status_msg = 'Overwriting database with {}'.format(tarball)
     status = 'maintenance'
     hookenv.status_set(status, status_msg)
@@ -46,6 +47,8 @@ def main(tarball):
         utils.drop_database(weebl_data, weebl_data['database'])
         utils.create_empty_database(weebl_data, weebl_data['database'])
         restore_from_tarball(tarball, weebl_data)
+        utils.create_default_user(
+            config['username'], config['email'], config['uid'], apikey)
         status_msg = 'Ready'
         status = 'active'
         outcome_msg = 'Database successfully overwritten with {}'.format(
@@ -60,7 +63,7 @@ def main(tarball):
 @hooks.hook("overwrite")
 def update():
     """ Overwrite existing Weebl database. """
-    main(hookenv.action_get("tarball"))
+    main(hookenv.action_get("tarball"), hookenv.action_get("apikey"))
 
 
 if __name__ == "__main__":

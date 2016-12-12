@@ -10,5 +10,8 @@ overwrite:
     tarball:
       type: string
       description: The name of the snapshot file.
-  required: [tarball]
+    apikey:
+      type: string
+      description: The apikey to reset default user back to after overwrite.
+  required: [tarball, apikey]
   additionalProperties: false
