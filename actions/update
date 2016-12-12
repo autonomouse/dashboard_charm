@@ -16,6 +16,7 @@ def update():
     msg = "Weebl update failed"
     status = 'maintenance'
     status_msg = 'Weebl installation failed'
+    utils.cmd_service('stop', 'weebl-gunicorn')
     try:
         utils.install_weebl(hookenv.config())
         msg = "Weebl update successful"
