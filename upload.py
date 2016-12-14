@@ -14,7 +14,7 @@ CHARMSTORE_LOC = "cs:~oil-charms/weebl"
 class Uploader():
 
     def main(self):
-        self.exit_if_repo_not_clean()
+        #self.exit_if_repo_not_clean()
         self.working_dir = os.getcwd()
         self.get_args()
         self.print_username_or_exit_if_logged_out()
@@ -26,7 +26,7 @@ class Uploader():
 
     def parse_args(self):
         parser = argparse.ArgumentParser()
-        parser.add_argument('release', default=False, nargs='?',
+        parser.add_argument('release', default=False, nargs='*',
                             help='Release as stable, candidate, beta, or edge.'
                             ' e.g.: "./upload.py stable"')
         return vars(parser.parse_args())
@@ -92,12 +92,14 @@ class Uploader():
         if not self.release:
             print("This charm has not been released.")
             return
-        output = self.cmd('charm release {} --channel {}'.format(
-            self.charm, self.release))
-        self.channel = output.split(' ')[2]
-        self.cmd('charm grant {} --channel {} everyone'.format(
-            self.charm, self.release))
-        print("This charm has been released to {}.".format(self.channel))
+        for release in self.release:
+            output = self.cmd('charm release {} --channel {}'.format(
+                self.charm, release))
+            self.cmd('charm grant {} --channel {} everyone'.format(
+                self.charm, release))
+        releases = (self.release[0] if len(self.release) < 2 else
+                    ", ".join(self.release[:-1]) + ' and ' + self.release[-1])
+        print("This charm has been released to {}.".format(releases))
 
 
 def main():
