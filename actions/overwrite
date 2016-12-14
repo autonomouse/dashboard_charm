@@ -47,12 +47,12 @@ def main(tarball):
         utils.drop_database(weebl_data, weebl_data['database'])
         utils.create_empty_database(weebl_data, weebl_data['database'])
         restore_from_tarball(tarball, weebl_data)
-        utils.create_default_user(config['username'], config['email'],
-                                  config['uid'], config['_apikey'])
         status_msg = 'Ready'
         status = 'active'
         outcome_msg = 'Database successfully overwritten with {}'.format(
             tarball)
+        utils.create_default_user(config['username'], config['email'],
+                                  config['uid'], config['_apikey'])
     finally:
         utils.cmd_service('start', 'weebl-gunicorn')
         utils.cmd_service('start', 'nginx')
