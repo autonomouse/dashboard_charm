@@ -175,7 +175,7 @@ def install_debs(weebl_pkg, config):
     install_deb_from_ppa(weebl_pkg, config)
 
 
-def install_weebl(config):
+def install_weebl(config, new_installation=True):
     install_debs(WEEBL_PKG, config)
     install_npm_deps()
     install_pip_deps()
@@ -184,7 +184,8 @@ def install_weebl(config):
     cmd_service('restart', 'nginx')
     setup_weebl_site(config)
     fix_bundle_dir_permissions()
-    load_fixtures()
+    if new_installation:
+        load_fixtures()
     edit_settings(config['debug_mode'])
     hookenv.open_port(80)
     hookenv.status_set('active', 'Ready')
