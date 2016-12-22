@@ -58,6 +58,7 @@ def main(tarball):
         utils.cmd_service('start', 'nginx')
         hookenv.log(outcome_msg)
         hookenv.status_set(status, status_msg)
+    utils.run_migrations()
 
 
 @hooks.hook("overwrite")

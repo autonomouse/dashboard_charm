@@ -256,10 +256,15 @@ def create_default_user(username, email, uid, apikey, provider="ubuntu"):
     hookenv.log('Setting up {} as the default user...'.format(username))
     os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
     try:
-        check_call(["django-admin", "preseed_default_superuser", username,
+        check_call(['django-admin', 'preseed_default_superuser', username,
                     email, provider, uid, apikey])
     except CalledProcessError:
         err_msg = "Error setting up default weebl user ({})".format(username)
         hookenv.log(err_msg)
         hookenv.status_set('maintenance', err_msg)
         raise Exception(err_msg)
+
+
+def run_migrations():
+    hookenv.log('Running migrations...')
+    check_call(['django-admin', 'migrate', '--noinput']
