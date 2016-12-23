@@ -129,11 +129,6 @@ def setup_weebl_site(config):
     check_call(['django-admin', 'set_up_site', config['weebl_name'].lower()])
 
 
-def load_fixtures():
-    hookenv.log('Loading fixtures...')
-    check_call(['django-admin', 'loaddata', 'initial_settings.yaml'])
-
-
 def generate_timestamp(timestamp_format="%F_%H-%M-%S"):
     return datetime.now().strftime(timestamp_format)
 
@@ -184,7 +179,6 @@ def install_weebl(config):
     cmd_service('restart', 'nginx')
     setup_weebl_site(config)
     fix_bundle_dir_permissions()
-    load_fixtures()
     edit_settings(config['debug_mode'])
     hookenv.open_port(80)
     hookenv.status_set('active', 'Ready')
