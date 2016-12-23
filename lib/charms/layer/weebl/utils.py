@@ -261,4 +261,4 @@ def create_default_user(username, email, uid, apikey, provider="ubuntu"):
 
 def run_migrations():
     hookenv.log('Running migrations...')
-    check_call(['django-admin', 'migrate', '--noinput']
+    check_call(['django-admin', 'migrate', '--noinput'])
