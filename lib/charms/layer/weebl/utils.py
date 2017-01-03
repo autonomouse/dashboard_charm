@@ -9,7 +9,7 @@ import shutil
 from random import choice
 from string import hexdigits
 from datetime import datetime
-from subprocess import check_call
+from subprocess import check_call, check_output
 from distutils.dir_util import copy_tree
 from charms.reactive import set_state
 from charmhelpers.core import hookenv
@@ -248,7 +248,6 @@ def upload_database_dump(weebl_data, dump_file):
 
 def create_default_user(username, email, uid, apikey, provider="ubuntu"):
     hookenv.log('Setting up {} as the default user...'.format(username))
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
     try:
         check_call(['django-admin', 'preseed_default_superuser', username,
                     email, provider, uid, apikey])
@@ -259,6 +258,7 @@ def create_default_user(username, email, uid, apikey, provider="ubuntu"):
         raise Exception(err_msg)
 
 
-def run_migrations():
+def run_migrations(cwd='/var/lib/juju/agents/'):
     hookenv.log('Running migrations...')
-    check_call(['django-admin', 'migrate', '--noinput'])
+    os.chdir(cwd) # as otherwise we get a FileNotFound error
+    hookenv.log(check_output(['django-admin', 'migrate', '--noinput']))

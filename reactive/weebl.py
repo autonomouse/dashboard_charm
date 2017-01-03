@@ -42,13 +42,6 @@ def send_default_credentials_to_weebl(oildashboard):
         weebl_apikey=config['_apikey'])
 
 
-def migrate_db():
-    hookenv.log('Migrating database...')
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'weebl.settings'
-    command = "django-admin migrate --noinput"
-    check_call(shlex.split(command))
-
-
 @when('database.master.available', 'nginx.available', 'config.changed')
 def install_weebl(*args, **kwargs):
     utils.install_weebl(config)

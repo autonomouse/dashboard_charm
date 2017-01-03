@@ -34,31 +34,24 @@ def restore_from_tarball(tarball, weebl_data):
 
 
 def main(tarball):
-    status_msg = 'Overwriting database with {}'.format(tarball)
-    status = 'maintenance'
-    hookenv.status_set(status, status_msg)
-    outcome_msg = 'Failed to overwrite database with {}'.format(tarball)
-    try:
-        utils.cmd_service('stop', 'weebl-gunicorn')
-        utils.cmd_service('stop', 'nginx')
-        weebl_data = utils.get_weebl_data()
-        # TODO: We should probably run the backup script here so that there is
-        # a tarball available in case this action is run accidentally...
-        utils.drop_database(weebl_data, weebl_data['database'])
-        utils.create_empty_database(weebl_data, weebl_data['database'])
-        restore_from_tarball(tarball, weebl_data)
-        status_msg = 'Ready'
-        status = 'active'
-        outcome_msg = 'Database successfully overwritten with {}'.format(
-            tarball)
-        utils.create_default_user(config['username'], config['email'],
-                                  config['uid'], config['_apikey'])
-    finally:
-        utils.cmd_service('start', 'weebl-gunicorn')
-        utils.cmd_service('start', 'nginx')
-        hookenv.log(outcome_msg)
-        hookenv.status_set(status, status_msg)
-    utils.run_migrations()
+    cwd = os.getcwd()
+    hookenv.status_set(
+        'maintenance', 'Overwriting database with {}'.format(tarball))
+    utils.cmd_service('stop', 'weebl-gunicorn')
+    utils.cmd_service('stop', 'nginx')
+    weebl_data = utils.get_weebl_data()
+    # TODO: We should probably run the backup script here so that there is
+    # a tarball available in case this action is run accidentally...
+    utils.drop_database(weebl_data, weebl_data['database'])
+    utils.create_empty_database(weebl_data, weebl_data['database'])
+    restore_from_tarball(tarball, weebl_data)
+    utils.create_default_user(config['username'], config['email'],
+                              config['uid'], config['_apikey'])
+    utils.cmd_service('start', 'weebl-gunicorn')
+    utils.cmd_service('start', 'nginx')
+    utils.run_migrations(cwd)
+    hookenv.log('Database successfully overwritten with {}'.format(tarball))
+    hookenv.status_set('active', 'Ready')
 
 
 @hooks.hook("overwrite")
