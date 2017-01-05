@@ -9,7 +9,7 @@ import shutil
 from random import choice
 from string import hexdigits
 from datetime import datetime
-from subprocess import check_call, check_output
+from subprocess import check_call, check_output, CalledProcessError
 from distutils.dir_util import copy_tree
 from charms.reactive import set_state
 from charmhelpers.core import hookenv
@@ -258,7 +258,9 @@ def create_default_user(username, email, uid, apikey, provider="ubuntu"):
         raise Exception(err_msg)
 
 
-def run_migrations(cwd='/var/lib/juju/agents/'):
+def run_migrations(cwd='/home/ubuntu/'):
     hookenv.log('Running migrations...')
     os.chdir(cwd) # as otherwise we get a FileNotFound error
-    hookenv.log(check_output(['django-admin', 'migrate', '--noinput']))
+    output = check_output(['django-admin', 'migrate', '--noinput'])
+    for line in output.decode('utf-8').split('\n'):
+        hookenv.log(line)

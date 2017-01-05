@@ -34,7 +34,6 @@ def restore_from_tarball(tarball, weebl_data):
 
 
 def main(tarball):
-    cwd = os.getcwd()
     hookenv.status_set(
         'maintenance', 'Overwriting database with {}'.format(tarball))
     utils.cmd_service('stop', 'weebl-gunicorn')
@@ -49,7 +48,7 @@ def main(tarball):
                               config['uid'], config['_apikey'])
     utils.cmd_service('start', 'weebl-gunicorn')
     utils.cmd_service('start', 'nginx')
-    utils.run_migrations(cwd)
+    utils.run_migrations()
     hookenv.log('Database successfully overwritten with {}'.format(tarball))
     hookenv.status_set('active', 'Ready')
 
