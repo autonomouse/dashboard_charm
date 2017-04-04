@@ -14,7 +14,7 @@ CHARMSTORE_LOC = "cs:~oil-charms/weebl"
 class Uploader():
 
     def main(self):
-        #self.exit_if_repo_not_clean()
+        self.exit_if_repo_not_clean()
         self.working_dir = os.getcwd()
         self.get_args()
         self.print_username_or_exit_if_logged_out()
