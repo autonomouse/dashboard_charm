@@ -10,6 +10,11 @@
       "from": "angular-cookies-1.5.8.tgz",
       "resolved": "file:angular-cookies-1.5.8.tgz"
     },
+    "angular-google-chart": {
+      "version": "0.1.0",
+      "from": "angular-google-chart-0.1.0.tgz",
+      "resolved": "file:angular-google-chart-0.1.0.tgz"
+    },
     "angular-nvd3": {
       "version": "1.0.7",
       "from": "angular-nvd3-1.0.7.tgz",
