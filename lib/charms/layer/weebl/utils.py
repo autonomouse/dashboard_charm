@@ -250,7 +250,7 @@ def create_default_user(username, email, uid, apikey, provider="ubuntu"):
     hookenv.log('Setting up {} as the default user...'.format(username))
     try:
         check_call(['django-admin', 'preseed_user', username,
-                    email, provider, uid, apikey, True])
+                    email, provider, uid, apikey, 'True'])
     except CalledProcessError:
         err_msg = "Error setting up default weebl user ({})".format(username)
         hookenv.log(err_msg)
